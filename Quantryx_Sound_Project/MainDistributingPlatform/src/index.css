@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Alter - Audio Visualization App Design System
+   Dark theme with vibrant purple accent for audio/VJ aesthetic
+   All colors in HSL format
+*/
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 262 60% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 262 83% 58%;
+
+    /* cyber accents */
+    --neon: 190 95% 55%;
+    --neon-soft: 190 90% 65%;
+    --grid-line: 262 40% 30%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 262 83% 58%;
+    --chart-2: 280 65% 60%;
+    --chart-3: 200 70% 50%;
+    --chart-4: 160 60% 45%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 240 6% 10%;
+    --sidebar-foreground: 240 5% 96%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 240 5% 96%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 262 60% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 262 83% 58%;
+
+    /* cyber accents */
+    --neon: 190 95% 55%;
+    --neon-soft: 190 90% 65%;
+    --grid-line: 262 40% 30%;
+
+    --chart-1: 262 83% 58%;
+    --chart-2: 280 65% 60%;
+    --chart-3: 200 70% 50%;
+    --chart-4: 160 60% 45%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 240 6% 10%;
+    --sidebar-foreground: 240 5% 96%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 240 5% 96%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+
+/* =========================================================
+   Cyberpunk-cybersigilism + solarpunk touch layer
+   (violet + cyan neon, soft organic glows, subtle scanline grid)
+   ========================================================= */
+@layer utilities {
+  /* Neon color helpers */
+  .text-neon { color: hsl(var(--neon)); }
+  .border-neon { border-color: hsl(var(--neon) / 0.5); }
+
+  /* Glow shadows */
+  .glow-violet { box-shadow: 0 0 24px -4px hsl(var(--primary) / 0.55), 0 0 2px hsl(var(--primary) / 0.6); }
+  .glow-cyan   { box-shadow: 0 0 24px -4px hsl(var(--neon) / 0.5), 0 0 2px hsl(var(--neon) / 0.5); }
+  .glow-soft   { box-shadow: 0 0 60px -10px hsl(var(--primary) / 0.35); }
+
+  /* Neon text glow (subtle) */
+  .text-glow   { text-shadow: 0 0 14px hsl(var(--primary) / 0.55), 0 0 30px hsl(var(--primary) / 0.25); }
+  .text-glow-cyan { text-shadow: 0 0 14px hsl(var(--neon) / 0.5), 0 0 30px hsl(var(--neon) / 0.2); }
+
+  /* Clipped "cyber corners" */
+  .cyber-corners {
+    position: relative;
+  }
+
+  /* Notched neon card with a CONTINUOUS violet->cyan border (two-layer clip). */
+  .cyber-frame {
+    position: relative;
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neon)));
+    padding: 1.5px;
+    box-shadow: 0 0 30px -10px hsl(var(--primary) / 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+  .group:hover .cyber-frame {
+    box-shadow: 0 0 36px -6px hsl(var(--primary) / 0.7);
+  }
+  /* Expanded / active state (e.g. opened collapsible module) */
+  .cyber-frame.is-open {
+    box-shadow: 0 0 44px -6px hsl(var(--primary) / 0.7), 0 0 4px hsl(var(--neon) / 0.4);
+  }
+  .cyber-frame-inner {
+    position: relative;
+    height: 100%;
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    background: hsl(var(--card));
+  }
+  /* cyan corner ticks */
+  .cyber-frame-inner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(hsl(var(--neon)), hsl(var(--neon))),
+      linear-gradient(hsl(var(--neon)), hsl(var(--neon)));
+    background-repeat: no-repeat;
+    background-size: 22px 2px, 22px 2px;
+    background-position: 12px 0, calc(100% - 12px) 100%;
+    opacity: 0.9;
+  }
+
+  /* Subtle notched corners for buttons — echoes the cyber card silhouette,
+     but lighter (small 8px cut on two diagonal corners). */
+  .cyber-clip {
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  }
+
+  /* Thin neon frame with clipped corners */
+  .neon-frame {
+    position: relative;
+    border: 1px solid hsl(var(--primary) / 0.35);
+  }
+  .neon-frame::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(hsl(var(--neon) / 0.9), hsl(var(--neon) / 0.9)) top left / 16px 1px no-repeat,
+      linear-gradient(hsl(var(--neon) / 0.9), hsl(var(--neon) / 0.9)) top left / 1px 16px no-repeat,
+      linear-gradient(hsl(var(--neon) / 0.9), hsl(var(--neon) / 0.9)) bottom right / 16px 1px no-repeat,
+      linear-gradient(hsl(var(--neon) / 0.9), hsl(var(--neon) / 0.9)) bottom right / 1px 16px no-repeat;
+    opacity: 0.7;
+  }
+}
+
+@layer components {
+  /* Subtle scanline + perspective grid background (cyber) */
+  .cyber-grid {
+    background-image:
+      linear-gradient(hsl(var(--grid-line) / 0.20) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid-line) / 0.20) 1px, transparent 1px);
+    background-size: 46px 46px, 46px 46px;
+    background-position: center;
+  }
+
+  /* Solarpunk-ish organic living glow field, layered behind heroes */
+  .aurora {
+    position: relative;
+    isolation: isolate;
+  }
+  .aurora::before {
+    content: "";
+    position: absolute; inset: -20% -10% auto -10%;
+    height: 120%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(40% 60% at 20% 20%, hsl(var(--primary) / 0.28), transparent 70%),
+      radial-gradient(35% 55% at 82% 10%, hsl(var(--neon) / 0.20), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, hsl(var(--primary) / 0.16), transparent 75%);
+    filter: blur(8px);
+    animation: aurora-drift 18s ease-in-out infinite alternate;
+  }
+
+  /* Faint moving scanlines overlay */
+  .scanlines::after {
+    content: "";
+    position: absolute; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      hsl(var(--neon) / 0.035) 0px,
+      hsl(var(--neon) / 0.035) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    mix-blend-mode: screen;
+  }
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(2%, 1.5%, 0) scale(1.06); }
+  100% { transform: translate3d(-2%, -1%, 0) scale(1.02); }
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  94% { opacity: 0.75; }
+  96% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before { animation: none; }
+}

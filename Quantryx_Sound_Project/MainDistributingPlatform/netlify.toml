@@ -1,0 +1,29 @@
+# Netlify konfigurácia pre Vite SPA (React Router)
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback – všetky cesty vracajú index.html, aby React Router fungoval
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Bezpečnostné HTTP hlavičky pre všetky odpovede
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    # CSP: povolené sú len vlastný pôvod, Supabase a Lemon Squeezy (checkout overlay).
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://assets.lemonsqueezy.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lemonsqueezy.com; frame-src https://*.lemonsqueezy.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://*.lemonsqueezy.com"
+
+# Cache pre verzované assety (Vite pridáva hash do názvu súboru)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
