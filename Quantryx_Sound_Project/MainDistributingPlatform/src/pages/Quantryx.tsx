@@ -11,6 +11,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
 import ModuleBackground from "@/components/ModuleBackground";
+import WaitlistSection from "@/components/WaitlistSection";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 
@@ -23,7 +24,7 @@ const Quantryx = () => {
     {
       name: "Alter",
       icon: Waves,
-      href: "/pricing",
+      href: "#waitlist",
       status: t("landing.statusActive"),
       tagline: t("landing.alterTagline"),
       price: `${t("landing.from")} ${planById.listener.price}`,
@@ -103,6 +104,11 @@ const Quantryx = () => {
                 {t("landing.aboutCta")}
               </Button>
             </Link>
+            <a href="#waitlist">
+              <Button size="lg">
+                Join ALTER Waitlist
+              </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -123,7 +129,7 @@ const Quantryx = () => {
             {apps.map((app) => {
               const Icon = app.icon;
               return (
-                <Link key={app.name} to={app.href} className="group">
+                <a key={app.name} href={app.href} className="group">
                   <div className="cyber-frame h-full">
                     <div className="cyber-frame-inner h-full">
                     <CardHeader>
@@ -144,19 +150,21 @@ const Quantryx = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{app.price}</span>
                         <span className="inline-flex items-center gap-2 text-primary font-medium">
-                          {t("landing.viewProduct")}
+                          Join waitlist
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </span>
                       </div>
                     </CardContent>
                     </div>
                   </div>
-                </Link>
+                </a>
               );
             })}
           </div>
         </div>
       </section>
+
+      <WaitlistSection />
 
       <section className="relative overflow-hidden py-24 px-6 border-t border-primary/15">
         <ModuleBackground src={spiralBg} position="center" opacity={0.22} blend="screen" fade="radial" />

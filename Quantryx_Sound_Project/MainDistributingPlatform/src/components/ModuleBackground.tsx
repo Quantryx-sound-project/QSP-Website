@@ -6,6 +6,8 @@ type Blend = "screen" | "lighten" | "plus-lighter" | "normal";
 interface ModuleBackgroundProps {
   src?: string;
   position?: string;
+  /** CSS background-size. Defaults to "cover"; use e.g. "100% auto" to show the image's full width. */
+  size?: string;
   opacity?: number;
   blend?: Blend;
   fade?: Fade;
@@ -32,6 +34,7 @@ const prefersReducedMotion = () =>
 const ModuleBackground = ({
   src,
   position = "center",
+  size = "cover",
   opacity = 0.6,
   blend = "screen",
   fade = "radial",
@@ -81,7 +84,7 @@ const ModuleBackground = ({
 
   const imgStyle: CSSProperties = {
     backgroundImage: src ? `url("${src}")` : undefined,
-    backgroundSize: "cover",
+    backgroundSize: size,
     backgroundPosition: position,
     backgroundRepeat: "no-repeat",
     opacity,

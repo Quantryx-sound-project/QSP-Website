@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          id: string
+          kind: "collab" | "early_access"
+          name: string | null
+          email: string | null
+          instagram: string | null
+          specialization: string | null
+          message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          kind: "collab" | "early_access"
+          name?: string | null
+          email?: string | null
+          instagram?: string | null
+          specialization?: string | null
+          message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: "collab" | "early_access"
+          name?: string | null
+          email?: string | null
+          instagram?: string | null
+          specialization?: string | null
+          message?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       licenses: {
         Row: {
           id: string

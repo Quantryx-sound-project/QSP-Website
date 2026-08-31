@@ -3,7 +3,7 @@
 export const site = {
   brand: "Quantryx Sound",
   artist: "Quantryx",
-  email: "Quantryxsoundproject@gmail.com",
+  email: "quantryxmusic@gmail.com",
   location: "Slovensko",
 
   // Krátke bio pre About stránku — TODO: prepíš vlastnými slovami

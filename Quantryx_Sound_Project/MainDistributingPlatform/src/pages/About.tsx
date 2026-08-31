@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Mail, ArrowRight, Music } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Mail, ArrowRight, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import AppLayout from "@/components/AppLayout";
 import ModuleBackground from "@/components/ModuleBackground";
 import aboutBg from "@/assets/backgrounds/hero-about.webp";
+import quantryxLogo from "@/assets/images/quantryxlogo.jpg";
+import longside from "@/assets/images/longside.jpg";
 import { site } from "@/lib/site";
-import { products, planNameKey } from "@/lib/products";
 import { useT } from "@/lib/i18n";
 
 const About = () => {
@@ -34,7 +33,7 @@ const About = () => {
     <AppLayout>
       {/* Hero s parallaxom */}
       <section className="relative overflow-hidden">
-        <ModuleBackground src={aboutBg} position="center" opacity={0.95} blur={0} darken={0.35} parallax={0.18} blend="normal" fade="radial" />
+        <ModuleBackground src={aboutBg} position="top" size="100% auto" opacity={1} blur={0} darken={0.28} parallax={0} blend="normal" fade="top" />
         <div
           className="pointer-events-none absolute -top-40 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
           style={{ transform: `translateY(${scrollY * 0.3}px)` }}
@@ -44,32 +43,26 @@ const About = () => {
           style={{ transform: `translateY(${scrollY * 0.15}px)` }}
         />
 
-        <div className="relative container mx-auto px-6 py-28 text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card/40 px-4 py-1.5 text-sm text-muted-foreground mb-6">
+        <div className="relative container mx-auto px-6 pt-52 pb-28 text-center max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card/40 px-4 py-1.5 text-sm text-muted-foreground">
             <Music className="h-4 w-4 text-primary" />
             {t("about.badge")}
           </div>
-          <h1
-            className="text-5xl md:text-6xl font-bold tracking-tight mb-4"
-            style={{ transform: `translateY(${scrollY * -0.05}px)` }}
-          >
-            {site.artist}
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            {t("about.heroSubtitle").replace("{brand}", site.brand)}
-          </p>
         </div>
       </section>
 
       {/* Bio */}
       <section className="px-6 pb-8">
-        <div className="container mx-auto max-w-3xl">
-          <div className="grid md:grid-cols-[1fr_2fr] gap-8 items-start">
-            <div className="aspect-square rounded-2xl border border-dashed border-border/60 bg-muted/30 grid place-items-center text-muted-foreground">
-              <div className="flex flex-col items-center gap-2">
-                <Sparkles className="h-8 w-8" />
-                <span className="text-sm">{t("about.yourPhoto")}</span>
-              </div>
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-[3fr_2fr] gap-8 items-center">
+            <div className="relative aspect-[2543/1362] rounded-2xl overflow-hidden">
+              <img
+                src={quantryxLogo}
+                alt={site.artist}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
             </div>
             <div className="space-y-4">
               {tList("bio").map((p, i) => (
@@ -82,23 +75,20 @@ const About = () => {
         </div>
       </section>
 
-      {/* Tvorba / projekty */}
-      <section className="px-6 py-12">
-        <div className="container mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold mb-6">{t("about.toolsTitle")}</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <Link key={product.slug} to={`/product/${product.slug}`}>
-                <Card className="bg-card/50 border-border/40 hover:border-primary/40 transition-colors h-full">
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold text-lg mb-1">{t(planNameKey(product.slug))}</h3>
-                    <p className="text-sm text-muted-foreground">{t(`products.${product.slug}.tagline`)}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
+      {/* Foto pod textom — fade dole ku kontaktu */}
+      <section className="relative -mt-4">
+        <img
+          src={longside}
+          alt={site.artist}
+          className="w-full h-[65vh] object-cover"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, #000 22%, #000 68%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, #000 22%, #000 68%, transparent 100%)",
+          }}
+          loading="lazy"
+        />
       </section>
 
       {/* Kontakt + siete */}

@@ -400,8 +400,8 @@ export const translations = {
       home: "Back home",
     },
     bio: [
-      "Quantryx is a music producer and sound designer focused on electronic music and audio tools for creators.",
-      "Out of that work came Alter — software made to be the tool I wanted myself: affordable for indie artists on a small budget like me, yet at a professional level.",
+      "Hello I'm Quantryx — a music producer and sound designer. I also work as a graphic and motion designer, a web designer, and at heart I build audio tools for the people who can create and explore with them.",
+      "Alter started as my bachelor's thesis — just a school project at first. But the deeper I got, the more I realized how much I was learning about sound, and how badly I wanted to share it with others. That's really what drives me now: to teach and inspire the people who feel the same passion for sound that I do.",
     ],
   },
 
@@ -839,8 +839,8 @@ export const translations = {
       home: "Späť na úvod",
     },
     bio: [
-      "Quantryx je hudobný producent a sound dizajnér zameraný na elektronickú hudbu a zvukové nástroje pre tvorcov.",
-      "Z vlastnej tvorby vznikol Alter — software, ktorý chcel sám používať: cenovo dostupný pre indie umelcov s malým rozpočtom, no na profesionálnej úrovni.",
+      "Ahoj, som Quantryx — hudobný producent a sound dizajnér. Venujem sa aj grafickému a motion dizajnu, tvorbe webu a v jadre vyvíjam zvukové nástroje pre ľudí, ktorí s nimi môžu tvoriť a objavovať.",
+      "Alter vznikol najprv ako môj bakalársky projekt do školy. No čím hlbšie som sa doňho ponáral, tým viac som si uvedomoval, koľko som sa toho o zvuku naučil — a ako veľmi to chcem zdieľať s ostatnými. To ma dnes ženie najviac: vzdelávať a inšpirovať ľudí, ktorí cítia rovnaký zápal pre zvuk ako ja.",
     ],
   },
 } as const;
