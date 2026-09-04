@@ -14,6 +14,7 @@ import ModuleBackground from "@/components/ModuleBackground";
 import WaitlistSection from "@/components/WaitlistSection";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
+import { trackClick } from "@/lib/analytics";
 
 const Quantryx = () => {
   const { t } = useT();
@@ -93,18 +94,18 @@ const Quantryx = () => {
           </blockquote>
           <p className="text-base text-muted-foreground mb-10">{t("landing.heroSubtitle")}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link to="/pricing">
+            <Link to="/pricing" onClick={() => trackClick("hero_pricing")}>
               <Button size="lg">
                 {t("nav.pricing")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/about">
+            <Link to="/about" onClick={() => trackClick("hero_about")}>
               <Button size="lg" variant="outline">
                 {t("landing.aboutCta")}
               </Button>
             </Link>
-            <a href="#waitlist">
+            <a href="#waitlist" onClick={() => trackClick("hero_waitlist")}>
               <Button size="lg">
                 Join ALTER Waitlist
               </Button>

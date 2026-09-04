@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Handshake, Sparkles, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase, supabaseConfigured } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { trackClick } from "@/lib/analytics";
 
 type Kind = "collab" | "early_access";
 
@@ -65,6 +66,7 @@ const WaitlistSection = () => {
     }
 
     setSubmitting(true);
+    trackClick(kind === "collab" ? "waitlist_collab_submit" : "waitlist_early_access_submit");
     const { error: dbError } = await supabase.from("waitlist").insert({
       kind,
       name: name.trim() || null,
@@ -117,7 +119,7 @@ const WaitlistSection = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => setKind("collab")}
+              onClick={() => { setKind("collab"); trackClick("waitlist_open_collab"); }}
               className="cyber-frame text-left group"
             >
               <div className="cyber-frame-inner h-full p-6">
@@ -132,7 +134,7 @@ const WaitlistSection = () => {
             </button>
             <button
               type="button"
-              onClick={() => setKind("early_access")}
+              onClick={() => { setKind("early_access"); trackClick("waitlist_open_early_access"); }}
               className="cyber-frame text-left group"
             >
               <div className="cyber-frame-inner h-full p-6">

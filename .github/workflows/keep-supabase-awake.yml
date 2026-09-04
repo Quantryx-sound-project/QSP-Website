@@ -1,0 +1,43 @@
+# ============================================================
+# Udržiava Supabase projekt bdelý.
+#
+# Supabase pozastaví projekt na free pláne po 7 dňoch nízkej aktivity.
+# Stačí pár požiadaviek denne, takže sem raz denne pošleme jeden dopyt.
+#
+# Hodnoty nižšie sú verejné (rovnaké sú v JS balíku, ktorý dostane
+# každý návštevník webu), takže tu nie je čo utajovať. Ak ich aj tak
+# chceš mať v Settings → Secrets, pridaj SUPABASE_URL a
+# SUPABASE_ANON_KEY a workflow ich uprednostní.
+#
+# Pozor: GitHub vypína naplánované workflowy v repozitároch,
+# do ktorých sa 60 dní nič nepushlo. Ak by si mal dlhšiu pauzu,
+# spusti ho ručne cez Actions → Run workflow.
+# ============================================================
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # každý deň o 06:00 UTC
+  workflow_dispatch:       # dá sa spustiť aj ručne
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://rocsxttousdashuavfut.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_2aYqca91nIJ_gvVh3eJ2ZA_UDoIURLU' }}
+        run: |
+          set -euo pipefail
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/waitlist?select=id&limit=1")
+          echo "Supabase odpovedal HTTP ${code}"
+          # 200 aj 401/403 znamenajú, že databáza požiadavku spracovala,
+          # čo Supabase ráta ako aktivitu. Zlé je len 5xx alebo výpadok.
+          if [ "${code}" -ge 500 ]; then
+            echo "Supabase neodpovedá správne"
+            exit 1
+          fi

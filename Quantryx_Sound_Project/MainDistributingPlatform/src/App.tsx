@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { I18nProvider } from "@/lib/i18n";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Quantryx from "./pages/Quantryx";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
@@ -16,6 +17,7 @@ import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
+        <AnalyticsTracker />
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Quantryx />} />
@@ -48,6 +51,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

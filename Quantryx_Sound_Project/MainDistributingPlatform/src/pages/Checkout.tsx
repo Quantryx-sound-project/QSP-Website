@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { planById, planNameKey } from "@/lib/products";
 import { openLemonCheckout } from "@/lib/lemonSqueezy";
+import { track } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
 import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const Checkout = () => {
   // Otvorí Lemon Squeezy checkout (overlay cez lemon.js, inak nová karta).
   const handleCheckout = async () => {
     setLoading(true);
+    void track("checkout_start", { props: { plan: plan.id } });
     try {
       const opened = openLemonCheckout(plan.id, {
         email: user?.email ?? undefined,
