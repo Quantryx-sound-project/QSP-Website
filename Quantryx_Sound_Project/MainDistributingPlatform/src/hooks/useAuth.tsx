@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { track } from "@/lib/analytics";
+import { track, acquisition } from "@/lib/analytics";
 
 interface AuthContextValue {
   session: Session | null;
@@ -56,7 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: name ? { full_name: name } : undefined,
+        // Zdroj návštevy ide do metadát účtu; trigger handle_new_user
+        // ho prepíše do profiles, aby sa dala merať atribúcia.
+        data: { ...(name ? { full_name: name } : {}), ...acquisition() },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });

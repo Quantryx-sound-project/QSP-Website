@@ -38,6 +38,38 @@ const SESSION_ID = (() => {
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL ?? ""}/functions/v1/track`;
 
+/**
+ * Odkiaľ človek prišiel. Zachytáva sa RAZ, pri načítaní aplikácie –
+ * neskôr už v adrese utm parametre nie sú, lebo medzitým preklikal ďalej.
+ * Drží sa len v pamäti karty, nikam sa neukladá.
+ *
+ * Použije sa pri registrácii: zapíše sa zákazníkovi do profilu, takže
+ * navždy vieš, ktorý kanál ti priviedol platiaceho človeka.
+ */
+const ACQUISITION = (() => {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  let referrerHost = "";
+  try {
+    if (document.referrer) {
+      const host = new URL(document.referrer).hostname.replace(/^www\./, "");
+      if (host && !host.endsWith("quantryxstudio.com")) referrerHost = host;
+    }
+  } catch {
+    // neplatný referrer – ignorujeme
+  }
+  return {
+    utm_source: params.get("utm_source") ?? "",
+    utm_medium: params.get("utm_medium") ?? "",
+    utm_campaign: params.get("utm_campaign") ?? "",
+    referrer_host: referrerHost,
+    landing_path: window.location.pathname,
+  };
+})();
+
+/** Zdroj návštevy pre uloženie k novému účtu. */
+export const acquisition = (): Record<string, string> => ({ ...ACQUISITION });
+
 /** UTM parametre z adresy, ak nejaké sú. */
 function utmParams(): Record<string, string> {
   if (typeof window === "undefined") return {};

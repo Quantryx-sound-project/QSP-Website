@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import TrendChart, { type TrendPoint } from "@/components/TrendChart";
 
 type Summary = {
   visitors: number;
@@ -21,6 +22,15 @@ type ClickRow = { label: string; clicks: number; visitors: number; pct_of_visito
 type FunnelRow = { step: string; step_order: number; visitors: number; pct_of_top: number | null };
 type SourceRow = { source: string; visitors: number };
 type DeviceRow = { device_type: string; visitors: number };
+type JourneyRow = { journey: string; steps: number; sessions: number };
+type ExitRow = { path: string; exits: number; exit_pct: number | null };
+type AcquisitionRow = {
+  source: string;
+  sign_ups: number;
+  paying_users: number;
+  revenue: number;
+  conversion_pct: number | null;
+};
 
 /**
  * Typy pre RPC funkcie vzniknú až keď sa znovu vygeneruje types.ts
@@ -70,6 +80,10 @@ const Admin = () => {
   const [funnel, setFunnel] = useState<FunnelRow[]>([]);
   const [sources, setSources] = useState<SourceRow[]>([]);
   const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [daily, setDaily] = useState<TrendPoint[]>([]);
+  const [journeys, setJourneys] = useState<JourneyRow[]>([]);
+  const [exits, setExits] = useState<ExitRow[]>([]);
+  const [acquisition, setAcquisition] = useState<AcquisitionRow[]>([]);
 
   // Overenie práv – server rozhoduje, nie klient.
   useEffect(() => {
@@ -89,7 +103,11 @@ const Admin = () => {
       rpc("analytics_funnel", { days }),
       rpc("analytics_sources", { days }),
       rpc("analytics_devices", { days }),
-    ]).then(([s, p, c, f, so, d]) => {
+      rpc("analytics_daily", { days }),
+      rpc("analytics_journeys", { days }),
+      rpc("analytics_exits", { days }),
+      rpc("analytics_acquisition", { days: 365 }),
+    ]).then(([s, p, c, f, so, d, dy, j, e, a]) => {
       if (cancelled) return;
       setSummary((s.data as Summary[] | null)?.[0] ?? null);
       setPaths((p.data as PathRow[] | null) ?? []);
@@ -97,6 +115,10 @@ const Admin = () => {
       setFunnel((f.data as FunnelRow[] | null) ?? []);
       setSources((so.data as SourceRow[] | null) ?? []);
       setDevices((d.data as DeviceRow[] | null) ?? []);
+      setDaily((dy.data as TrendPoint[] | null) ?? []);
+      setJourneys((j.data as JourneyRow[] | null) ?? []);
+      setExits((e.data as ExitRow[] | null) ?? []);
+      setAcquisition((a.data as AcquisitionRow[] | null) ?? []);
       setLoading(false);
     });
 
@@ -194,7 +216,17 @@ const Admin = () => {
               <Stat label="Relácie" value={String(summary.sessions)} />
             </div>
 
-            <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <Card className="mt-10">
+              <CardHeader>
+                <CardTitle>Priebeh v čase</CardTitle>
+                <CardDescription>Denne, za zvolené obdobie</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TrendChart data={daily} />
+              </CardContent>
+            </Card>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Lievik</CardTitle>
@@ -282,6 +314,84 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cesty návštevníkov</CardTitle>
+                  <CardDescription>Poradie stránok v rámci jednej návštevy</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {journeys.map((row) => (
+                    <div key={row.journey} className="flex items-start justify-between gap-4 text-sm">
+                      <span className="break-all font-mono text-xs leading-relaxed">{row.journey}</span>
+                      <span className="shrink-0 tabular-nums text-muted-foreground">{row.sessions}×</span>
+                    </div>
+                  ))}
+                  {journeys.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Zatiaľ žiadne dáta.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Kde ľudia odchádzajú</CardTitle>
+                  <CardDescription>Posledná stránka pred odchodom</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {exits.map((row) => (
+                    <div key={row.path} className="flex justify-between gap-4 text-sm">
+                      <span className="truncate font-mono text-xs">{row.path}</span>
+                      <span className="shrink-0 tabular-nums text-muted-foreground">
+                        {row.exits} · {pct(row.exit_pct)}
+                      </span>
+                    </div>
+                  ))}
+                  {exits.length === 0 && <p className="text-sm text-muted-foreground">Zatiaľ žiadne dáta.</p>}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Ktorý kanál nosí zákazníkov</CardTitle>
+                <CardDescription>
+                  Zdroj sa ukladá k účtu pri registrácii, takže platí aj po týždňoch · za posledný rok
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-muted-foreground">
+                        <th className="py-2 pr-4 font-medium">Zdroj</th>
+                        <th className="py-2 pr-4 text-right font-medium">Registrácie</th>
+                        <th className="py-2 pr-4 text-right font-medium">Zaplatili</th>
+                        <th className="py-2 pr-4 text-right font-medium">Konverzia</th>
+                        <th className="py-2 text-right font-medium">Tržby</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {acquisition.map((row) => (
+                        <tr key={row.source} className="border-b border-border/50">
+                          <td className="py-2 pr-4">{row.source}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{row.sign_ups}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{row.paying_users}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{pct(row.conversion_pct)}</td>
+                          <td className="py-2 text-right tabular-nums">{Number(row.revenue ?? 0).toFixed(2)} €</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {acquisition.length === 0 && (
+                    <p className="pt-3 text-sm text-muted-foreground">
+                      Zatiaľ žiadne registrácie. Zdroj sa začne zaznamenávať pri ďalšom novom účte.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>
