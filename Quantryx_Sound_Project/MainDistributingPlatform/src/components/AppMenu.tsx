@@ -1,9 +1,10 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -45,12 +46,21 @@ const alterItems: Item[] = [
 // One nav row: emblem is greyscale by default (menu text colour), colours in on
 // hover, and stays coloured when active — where the cell also gets a gradient
 // panel with a colour-matched gallery underlay.
-const NavItem = ({ item, small = false }: { item: Item; small?: boolean }) => {
+const NavItem = ({
+  item,
+  small = false,
+  onNavigate,
+}: {
+  item: Item;
+  small?: boolean;
+  onNavigate?: () => void;
+}) => {
   const { t } = useT();
   const label = item.label ?? t(item.labelKey as string);
   return (
     <NavLink
       to={item.to}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           "group relative block rounded-lg font-medium transition-colors",
@@ -109,8 +119,43 @@ const NavItem = ({ item, small = false }: { item: Item; small?: boolean }) => {
   );
 };
 
+/**
+ * Položka pre správcu. Nemá emblem ako ostatné stránky – nie je to
+ * verejná časť webu, tak nech sa aj vizuálne odlišuje.
+ */
+const AdminNavItem = ({ onNavigate }: { onNavigate?: () => void }) => (
+  <NavLink
+    to="/admin"
+    onClick={onNavigate}
+    className={({ isActive }) =>
+      cn(
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        isActive
+          ? "text-foreground shadow-[inset_0_0_18px_-8px_hsl(var(--neon)/0.6)]"
+          : "text-muted-foreground hover:text-foreground"
+      )
+    }
+  >
+    {({ isActive }) => (
+      <>
+        {isActive && (
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-[2px] rounded-full bg-neon" />
+        )}
+        <BarChart3
+          className={cn(
+            "h-5 w-5 shrink-0 transition",
+            isActive ? "text-neon" : "opacity-60 group-hover:opacity-100"
+          )}
+        />
+        <span className="truncate">Analytika</span>
+      </>
+    )}
+  </NavLink>
+);
+
 const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; compact?: boolean }) => {
   const { session, signOut } = useAuth();
+  const isAdmin = useIsAdmin();
   const { t } = useT();
   const navigate = useNavigate();
   const [alterOpen, setAlterOpen] = useState(true);
@@ -132,7 +177,7 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
 
       <nav className={cn("flex-1 space-y-1", compact ? "px-0 py-0" : "px-3 py-4")}>
         {navItems.map((item) => (
-          <NavItem key={item.to} item={item} />
+          <NavItem key={item.to} item={item} onNavigate={onNavigate} />
         ))}
 
         <div className={cn("pt-2", compact && "pt-1")}>
@@ -156,11 +201,21 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
           {alterOpen && (
             <div className="mt-1 ml-3 space-y-1 border-l border-border/40 pl-3">
               {alterItems.map((item) => (
-                <NavItem key={item.to} item={item} small />
+                <NavItem key={item.to} item={item} small onNavigate={onNavigate} />
               ))}
             </div>
           )}
         </div>
+
+        {/* Správcovská časť – zobrazí sa len tebe. */}
+        {isAdmin && (
+          <div className="mt-4 space-y-1 border-t border-border/40 pt-4">
+            <p className="px-3 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground/70">
+              Správa
+            </p>
+            <AdminNavItem onNavigate={onNavigate} />
+          </div>
+        )}
       </nav>
 
       <div className={cn("space-y-3", compact ? "px-0 pt-3" : "px-3 py-4 border-t border-border/40")}>
