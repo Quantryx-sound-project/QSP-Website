@@ -36,7 +36,14 @@ const SESSION_ID = (() => {
   }
 })();
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL ?? ""}/functions/v1/track`;
+/**
+ * Adresu z premennej prostredia očistíme, kým z nej niečo skladáme.
+ * Stačí jedna medzera navyše pri kopírovaní do nastavení a vznikne
+ * neplatná adresa – prehliadač potom požiadavku ani neodošle a meranie
+ * ticho nefunguje. Presne to sa nám raz stalo.
+ */
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
+const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/track`;
 
 /**
  * Odkiaľ človek prišiel. Zachytáva sa RAZ, pri načítaní aplikácie –
