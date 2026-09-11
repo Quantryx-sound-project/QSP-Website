@@ -10,6 +10,7 @@ import { trackClick } from "@/lib/analytics";
 type Kind = "collab" | "early_access";
 
 const SPECIALIZATIONS = [
+  "Sharing & reposting",
   "Audio Engineering",
   "Audio Production",
   "Software Testing",
@@ -162,7 +163,10 @@ const WaitlistSection = () => {
               {kind === "collab" ? (
                 <>
                   <div className="space-y-2">
-                    <Label>What's your specialty?</Label>
+                    <Label>How can you help?</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Pick anything that fits. Sharing posts about ALTER counts — you don't need to be a pro.
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {SPECIALIZATIONS.map((s) => (
                         <button
