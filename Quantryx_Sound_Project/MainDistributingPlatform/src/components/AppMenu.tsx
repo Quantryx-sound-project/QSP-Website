@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3 } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,15 +28,27 @@ import ulPro from "@/assets/backgrounds/hero-pro.webp";
 import ulDemo from "@/assets/backgrounds/hero-demo.webp"; // mandala
 import ulCreator from "@/assets/backgrounds/underlay-creator.webp"; // spiro tunnel — creator hover bg (separate from hero)
 
-type Item = { to: string; labelKey?: string; label?: string; emblem: string; underlay: string };
+type Item = {
+  to: string;
+  labelKey?: string;
+  label?: string;
+  /** Starsie polozky maju vlastny emblem; nove pouzivaju ikonu. */
+  emblem?: string;
+  underlay?: string;
+  icon?: LucideIcon;
+};
 
 export const navItems: Item[] = [
+  { to: "/", label: "Main page", icon: Home },
   { to: "/dashboard", labelKey: "nav.account", emblem: embAccount, underlay: ulAccount },
-  { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
+  { to: "/portfolio", label: "Portfolio", icon: FolderOpen },
   { to: "/about", labelKey: "nav.aboutFull", emblem: embAbout, underlay: ulAbout },
 ];
 
+// Ceny patria k Alteru, tak su az tu - a hned ako prva polozka,
+// lebo to je najcastejsia otazka pred stiahnutim.
 const alterItems: Item[] = [
+  { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
   { to: "/product/creator", labelKey: "plans.creatorName", emblem: embCreator, underlay: ulCreator },
@@ -60,6 +72,7 @@ const NavItem = ({
   return (
     <NavLink
       to={item.to}
+      end={item.to === "/"}
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
@@ -78,6 +91,7 @@ const NavItem = ({
           {/* Row background — the colour-matched gallery underlay.
               Appears on hover already; the gradient panel + neon edge are added only when active. */}
           <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+            {item.underlay && (
             <span
               className={cn(
                 // These underlays are very dark hero images (near-black with a bright
@@ -92,6 +106,7 @@ const NavItem = ({
               )}
               style={{ backgroundImage: `url(${item.underlay})` }}
             />
+            )}
             {isActive && (
               <>
                 <span className="absolute inset-0 bg-gradient-to-r from-primary/18 via-primary/5 to-neon/8" />
@@ -100,17 +115,29 @@ const NavItem = ({
             )}
           </span>
           <span className="relative z-10 flex items-center gap-3">
-            <img
-              src={item.emblem}
-              alt=""
-              aria-hidden
-              className={cn(
-                "h-5 w-5 shrink-0 object-contain transition duration-300",
-                isActive
-                  ? "opacity-100 grayscale-0 drop-shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
-                  : "opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0"
-              )}
-            />
+            {item.emblem ? (
+              <img
+                src={item.emblem}
+                alt=""
+                aria-hidden
+                className={cn(
+                  "h-5 w-5 shrink-0 object-contain transition duration-300",
+                  isActive
+                    ? "opacity-100 grayscale-0 drop-shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
+                    : "opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0"
+                )}
+              />
+            ) : (
+              item.icon && (
+                <item.icon
+                  aria-hidden
+                  className={cn(
+                    "h-5 w-5 shrink-0 transition duration-300",
+                    isActive ? "text-neon" : "opacity-60 group-hover:opacity-100"
+                  )}
+                />
+              )
+            )}
             <span className="truncate">{label}</span>
           </span>
         </>

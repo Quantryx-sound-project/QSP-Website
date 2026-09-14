@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Menu, X, Waves } from "lucide-react";
+import { ArrowRight, Menu, X, Waves, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSidebar } from "@/hooks/useSidebar";
 import Footer from "@/components/Footer";
@@ -12,7 +12,7 @@ import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
 import ModuleBackground from "@/components/ModuleBackground";
 import WaitlistSection from "@/components/WaitlistSection";
-import heroBg from "@/assets/backgrounds/background.png";
+import heroBg from "@/assets/backgrounds/hero-main.webp";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
 
@@ -29,6 +29,18 @@ const Quantryx = () => {
       status: t("landing.statusActive"),
       tagline: t("landing.alterTagline"),
       price: `${t("landing.from")} ${planById.listener.price}`,
+      cta: "Join waitlist",
+      internal: false,
+    },
+    {
+      name: "Book a design",
+      icon: Palette,
+      href: "/design",
+      status: "Available",
+      tagline: "Cover art for singles, EPs and albums. Motion and 3D design. Made by hand — no AI.",
+      price: "Price on request",
+      cta: "See what I offer",
+      internal: true,
     },
   ];
 
@@ -129,8 +141,19 @@ const Quantryx = () => {
           <div className="grid gap-6 sm:grid-cols-2">
             {apps.map((app) => {
               const Icon = app.icon;
+              const Wrapper = app.internal
+                ? ({ children }: { children: React.ReactNode }) => (
+                    <Link to={app.href} className="group" onClick={() => trackClick(`product_${app.name}`)}>
+                      {children}
+                    </Link>
+                  )
+                : ({ children }: { children: React.ReactNode }) => (
+                    <a href={app.href} className="group" onClick={() => trackClick(`product_${app.name}`)}>
+                      {children}
+                    </a>
+                  );
               return (
-                <a key={app.name} href={app.href} className="group">
+                <Wrapper key={app.name}>
                   <div className="cyber-frame h-full">
                     <div className="cyber-frame-inner h-full">
                     <CardHeader>
@@ -151,14 +174,14 @@ const Quantryx = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{app.price}</span>
                         <span className="inline-flex items-center gap-2 text-primary font-medium">
-                          Join waitlist
+                          {app.cta}
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </span>
                       </div>
                     </CardContent>
                     </div>
                   </div>
-                </a>
+                </Wrapper>
               );
             })}
           </div>

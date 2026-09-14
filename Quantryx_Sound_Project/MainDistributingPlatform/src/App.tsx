@@ -18,6 +18,8 @@ import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Portfolio from "./pages/Portfolio";
+import Design from "./pages/Design";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/design" element={<Design />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
