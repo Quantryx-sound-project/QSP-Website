@@ -4,7 +4,8 @@ import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { site } from "@/lib/site";
 import { useParallax } from "@/hooks/useParallax";
-import ArtworkOrbit from "@/components/portfolio/ArtworkOrbit";
+import ArtworkOrbit, { type Artwork } from "@/components/portfolio/ArtworkOrbit";
+import heroBg from "@/assets/backgrounds/hero-main.webp";
 
 import art1 from "@/assets/portfolio/art-1.webp";
 import art2 from "@/assets/portfolio/art-2.webp";
@@ -21,11 +22,13 @@ import merchSide from "@/assets/portfolio/merch-hoodie-side.webp";
 import merchBack from "@/assets/portfolio/merch-hoodie-back.webp";
 import merchScarf from "@/assets/portfolio/merch-scarf.webp";
 
-const ARTWORKS = [
-  { src: art1, alt: "Fredo – cover artwork" },
-  { src: art2, alt: "Quantryx – 3D scene" },
-  { src: art3, alt: "Gudmy – merch artwork" },
-  { src: art4, alt: "Gudmy – textile print" },
+// Doplň sem skutočné artworky aj odkazy. `spotify` je voliteľné –
+// keď chýba, tlačidlo sa v detaile jednoducho nezobrazí.
+const ARTWORKS: Artwork[] = [
+  { src: art1, title: "Fredo", kind: "Single cover" },
+  { src: art2, title: "Quantryx", kind: "Album cover" },
+  { src: art3, title: "Gudmy", kind: "Merch artwork" },
+  { src: art4, title: "Gudmy", kind: "Textile print" },
 ];
 
 const LOGOS = [
@@ -79,6 +82,18 @@ const Portfolio = () => {
       >
         <div
           aria-hidden
+          className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center opacity-35 will-change-transform"
+          style={{
+            backgroundImage: `url(${heroBg})`,
+            transform: `scale(1.15) translateY(${(hero.progress - 0.5) * 60}px)`,
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background"
+        />
+        <div
+          aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 cyber-grid opacity-25 will-change-transform"
           style={{ transform: `translateY(${(hero.progress - 0.5) * -80}px)` }}
         />
@@ -120,8 +135,8 @@ const Portfolio = () => {
             note="Singles, EPs and albums. Drag the ring to spin it."
             shift={(orbit.progress - 0.5) * -30}
           />
-          <div style={{ transform: `translateY(${(orbit.progress - 0.5) * -50}px)` }}>
-            <ArtworkOrbit images={ARTWORKS} />
+          <div className="mx-auto max-w-3xl" style={{ transform: `translateY(${(orbit.progress - 0.5) * -50}px)` }}>
+            <ArtworkOrbit items={ARTWORKS} />
           </div>
         </div>
       </section>

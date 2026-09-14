@@ -12,7 +12,7 @@ import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
 import ModuleBackground from "@/components/ModuleBackground";
 import WaitlistSection from "@/components/WaitlistSection";
-import heroBg from "@/assets/backgrounds/hero-main.webp";
+import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
 
