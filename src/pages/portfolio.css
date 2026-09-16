@@ -1,0 +1,131 @@
+/* Quantryx Portfolio — interactive sections.
+   Scoped under .qx so nothing leaks into the rest of the app.
+   Colours match the app tokens (--primary violet, --neon cyan); font is inherited. */
+
+.qx{ --v:#7c3aed; --vs:#b79bff; --cy:#1ec8ee; --cys:#8ceaff; --pink:#e64bd0;
+  --line:rgba(124,58,237,.24); --line-cy:rgba(30,200,238,.22); --muted:#948dab;
+  color:#efecf8; }
+.qx a{color:inherit;text-decoration:none}
+.qx img{max-width:100%;display:block}
+
+.qx .wrap{max-width:1180px;margin:0 auto;padding-inline:20px}
+.qx .eyebrow{text-transform:uppercase;letter-spacing:.34em;font-size:.7rem;font-weight:600;color:var(--cys);display:inline-flex;align-items:center;gap:.7em}
+.qx .eyebrow::before{content:"";width:26px;height:1px;background:linear-gradient(90deg,transparent,var(--cy))}
+.qx .sec-title{font-weight:800;font-size:clamp(2.2rem,5.5vw,3.6rem);line-height:.98;margin:.55rem 0 0;letter-spacing:-.01em;text-transform:uppercase}
+.qx .sec-note{color:var(--muted);max-width:58ch;margin:1rem 0 0;line-height:1.6;font-size:1rem}
+.qx .sec{position:relative;padding-block:clamp(64px,10vw,128px);border-top:1px solid var(--line)}
+.qx .sec-head{margin-bottom:clamp(28px,5vw,52px)}
+.qx .tip{text-align:center;color:var(--muted);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;margin-top:16px}
+
+/* ---- Artworks orbit (1:1 CSS 3D carousel) ---- */
+.qx .banner{position:relative;width:100%;height:100vh;min-height:600px;overflow:hidden;isolation:isolate}
+.qx .banner-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center}
+.qx .banner-bg::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 55% at 50% 46%,transparent,rgba(5,4,9,.55) 88%),linear-gradient(180deg,rgba(5,4,9,.65),transparent 22%,transparent 74%,hsl(var(--background)))}
+.qx .slider{position:absolute;width:13rem;height:13rem;top:50%;left:50%;margin-top:-6.5rem;margin-left:-6.5rem;z-index:3;
+  transform-style:preserve-3d;transform:perspective(1050px);animation:qxRun 34s linear infinite}
+@keyframes qxRun{from{transform:perspective(1050px) rotateX(-14deg) rotateY(0)}to{transform:perspective(1050px) rotateX(-14deg) rotateY(360deg)}}
+.qx .item{position:absolute;inset:0;transform:rotateY(calc((var(--i) - 1) * (360 / var(--n)) * 1deg)) translateZ(38rem)}
+.qx .item img{width:100%;height:100%;object-fit:cover;aspect-ratio:1/1;border-radius:10px;cursor:pointer;
+  box-shadow:0 20px 50px rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.14);transition:transform .3s,box-shadow .3s}
+.qx .item img:hover{transform:scale(1.07);box-shadow:0 0 44px -6px var(--v)}
+.qx .orbit-hint{position:absolute;bottom:26px;left:0;right:0;z-index:4;text-align:center;color:rgba(255,255,255,.55);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase}
+@media(max-width:900px){
+  .qx .slider{width:9rem;height:9rem;margin-top:-4.5rem;margin-left:-4.5rem}
+  .qx .item{transform:rotateY(calc((var(--i) - 1) * (360 / var(--n)) * 1deg)) translateZ(21rem)}
+}
+
+/* ---- 2D logos: magnifier + codex ---- */
+.qx .loga{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#08060f}
+.qx .loga-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line)}
+.qx .ltile{aspect-ratio:4/3;background:#0b0916;display:grid;place-items:center;padding:24px;position:relative;cursor:zoom-in;transition:background .25s;border:0}
+.qx .ltile img{max-height:74%;max-width:82%;width:auto;object-fit:contain;filter:drop-shadow(0 0 18px rgba(124,58,237,.4));transition:transform .3s}
+.qx .ltile:hover{background:#130d24}
+.qx .ltile:hover img{transform:scale(1.06)}
+.qx .ltile .sub{position:absolute;bottom:10px;left:12px;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.qx .ltile .zi{position:absolute;top:9px;right:12px;font-size:.9rem;color:var(--cy);opacity:.45}
+.qx-lens{position:fixed;width:200px;height:200px;border-radius:50%;pointer-events:none;z-index:80;display:none;
+  background-repeat:no-repeat;background-color:#0b0916;border:2px solid var(--cy,#1ec8ee);
+  box-shadow:0 0 0 2px rgba(0,0,0,.6),0 0 34px -4px #1ec8ee,inset 0 0 44px rgba(0,0,0,.55)}
+.qx-lens.on{display:block}
+@media(hover:none){.qx-lens{display:none!important}.qx .ltile{cursor:pointer}}
+.qx-codex{position:fixed;inset:0;z-index:130;display:none;place-items:center;padding:24px;background:rgba(4,3,8,.9);backdrop-filter:blur(12px)}
+.qx-codex.open{display:grid}
+.qx-codex-panel{position:relative;width:100%;max-width:480px;padding:40px 34px 30px;text-align:center;color:#efecf8;
+  background:linear-gradient(160deg,#160f28,#09060f);border:1px solid var(--line-cy,rgba(30,200,238,.22));border-radius:4px;
+  box-shadow:0 0 70px -10px #1ec8ee,inset 0 0 40px rgba(30,200,238,.05);animation:qxCodexIn .4s cubic-bezier(.2,.9,.2,1)}
+.qx-codex-panel::before{content:"";position:absolute;inset:6px;border:1px solid rgba(30,200,238,.18);pointer-events:none}
+.qx-c{position:absolute;width:16px;height:16px;border:2px solid #1ec8ee}
+.qx-c.tl{top:-1px;left:-1px;border-right:0;border-bottom:0}.qx-c.tr{top:-1px;right:-1px;border-left:0;border-bottom:0}
+.qx-c.bl{bottom:-1px;left:-1px;border-right:0;border-top:0}.qx-c.br{bottom:-1px;right:-1px;border-left:0;border-top:0}
+@keyframes qxCodexIn{from{transform:translateY(16px) scale(.95);opacity:0}to{transform:none;opacity:1}}
+.qx-codex-eyebrow{font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--cys,#8ceaff)}
+.qx-codex-fig{margin:16px auto;min-height:170px;display:grid;place-items:center}
+.qx-codex-fig img{max-width:100%;max-height:44vh;object-fit:contain;filter:drop-shadow(0 0 26px rgba(124,58,237,.5))}
+.qx-codex-panel h3{text-transform:uppercase;letter-spacing:.04em;font-weight:800;font-size:1.7rem;margin:.4rem 0 0}
+.qx-codex-panel .k{color:var(--muted);font-size:.82rem;margin-top:.2rem}
+.qx-codex-x{position:absolute;top:8px;right:14px;background:none;border:0;color:#948dab;font-size:1.5rem;cursor:pointer;z-index:2}
+
+/* ---- 3D logos click-through ---- */
+.qx .carou{position:relative;height:min(58vw,440px);display:flex;align-items:center;justify-content:center;perspective:1400px}
+.qx .c-item{position:absolute;width:min(60%,340px);aspect-ratio:1/1;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  background:#0b0916;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s,filter .5s;box-shadow:0 30px 60px rgba(0,0,0,.6)}
+.qx .c-item img{width:100%;height:100%;object-fit:contain}
+.qx .c-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:10;width:46px;height:46px;border-radius:50%;
+  border:1px solid var(--line-cy);background:rgba(10,8,18,.7);color:var(--cy);font-size:1.2rem;cursor:pointer;backdrop-filter:blur(6px)}
+.qx .c-arrow.prev{left:4px}.qx .c-arrow.next{right:4px}
+.qx .c-cap{text-align:center;margin-top:20px;letter-spacing:.06em;font-size:1.3rem;text-transform:uppercase;font-weight:800}
+
+/* ---- Motion: player + mini grid ---- */
+.qx .motion{display:grid;gap:22px;grid-template-columns:1fr}
+@media(min-width:860px){.qx .motion{grid-template-columns:1.55fr .9fr}}
+.qx .player{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:16/10}
+.qx .player video,.qx .player img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.qx .player .pmeta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:1rem 1.1rem;display:flex;justify-content:space-between;align-items:flex-end;
+  background:linear-gradient(transparent,rgba(4,3,8,.9));letter-spacing:.04em;font-size:1.2rem;text-transform:uppercase;font-weight:800}
+.qx .player .full{font-size:.68rem;letter-spacing:.12em;color:var(--cy);border:1px solid var(--line-cy);border-radius:999px;padding:.35rem .7rem;text-transform:uppercase;white-space:nowrap;font-weight:400}
+.qx .mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:9px;align-content:start;max-height:420px;overflow:auto;padding-right:4px}
+.qx .mini{position:relative;aspect-ratio:1/1;border-radius:9px;overflow:hidden;border:1px solid var(--line);cursor:pointer;transition:transform .22s,box-shadow .22s,border-color .22s;padding:0;background:#0b0916}
+.qx .mini img{width:100%;height:100%;object-fit:cover;opacity:.82;transition:opacity .22s}
+.qx .mini:hover{transform:scale(1.16);z-index:5;border-color:var(--cy);box-shadow:0 8px 26px rgba(0,0,0,.6),0 0 20px -4px var(--cy)}
+.qx .mini:hover img{opacity:1}
+.qx .mini.on{border-color:var(--vs);box-shadow:0 0 0 1px var(--vs),0 0 22px -4px var(--v)}
+.qx .mini .cap{position:absolute;left:0;right:0;bottom:0;padding:16px 5px 4px;font-size:.56rem;letter-spacing:.04em;text-align:center;background:linear-gradient(transparent,rgba(4,3,8,.92));color:#fff;opacity:0;transition:opacity .2s;line-height:1.15}
+.qx .mini:hover .cap{opacity:1}
+.qx .mini .dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--cy);box-shadow:0 0 8px var(--cy)}
+
+/* ---- Drawings ---- */
+.qx .sketch{position:relative;min-height:460px;display:grid;place-items:center}
+.qx .paper{position:absolute;width:min(240px,52vw);aspect-ratio:3/4;border-radius:5px;background:#efe9dc;padding:9px 9px 26px;
+  box-shadow:0 24px 54px rgba(0,0,0,.6);cursor:pointer;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .3s;border:0}
+.qx .paper img{width:100%;height:100%;object-fit:contain;border-radius:2px;background:#e6dfcf}
+.qx .paper .cap{position:absolute;bottom:7px;left:0;right:0;text-align:center;color:#4c4638;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase}
+
+/* ---- Fun ---- */
+.qx .board{position:relative;min-height:380px;border:1px dashed var(--line);border-radius:18px;overflow:hidden;background:radial-gradient(60% 80% at 20% 10%,rgba(124,58,237,.12),transparent),#0a0812}
+.qx .sticker{position:absolute;width:118px;height:118px;border-radius:15px;display:grid;place-items:center;cursor:grab;color:#fff;text-align:center;font-size:1.1rem;letter-spacing:.05em;box-shadow:0 14px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.16);touch-action:none;user-select:none;text-transform:uppercase;font-weight:800}
+.qx .sticker:active{cursor:grabbing}
+.qx .board-tip{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:var(--muted);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;pointer-events:none}
+
+/* ---- Merch ---- */
+.qx .merch{display:grid;grid-template-columns:1fr;gap:28px;align-items:center}
+@media(min-width:760px){.qx .merch{grid-template-columns:1.05fr .95fr}}
+.qx .garment{aspect-ratio:4/5;max-width:460px;width:100%;margin:0 auto;border-radius:20px;position:relative;overflow:hidden;border:1px solid var(--line);background:#0b0916}
+.qx .gv{position:absolute;inset:0;opacity:0;transform:scale(1.05);transition:opacity .5s,transform .5s}
+.qx .gv.on{opacity:1;transform:none}
+.qx .gv img{width:100%;height:100%;object-fit:contain;background:#0b0916}
+.qx .angles{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.qx .angle-btn{letter-spacing:.1em;text-transform:uppercase;font-size:.72rem;color:var(--muted);border:1px solid var(--line);background:#120f1c;border-radius:10px;padding:.6rem 1rem;cursor:pointer;transition:.2s}
+.qx .angle-btn.on{color:#fff;border-color:var(--cy);background:rgba(30,200,238,.12);box-shadow:0 0 20px -6px var(--cy)}
+
+/* ---- shared detail modal (covers + drawings) ---- */
+.qx-detail{position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:24px;background:rgba(4,3,8,.85);backdrop-filter:blur(10px)}
+.qx-detail.open{display:grid}
+.qx-detail-card{width:100%;max-width:380px;text-align:center;color:#efecf8;animation:qxPop .25s ease}
+@keyframes qxPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.qx-detail-card img{width:100%;border-radius:16px;box-shadow:0 0 70px -12px #7c3aed;border:1px solid rgba(255,255,255,.14)}
+.qx-detail-card h3{margin:1.1rem 0 .2rem;font-size:1.7rem;text-transform:uppercase;letter-spacing:.03em;font-weight:800}
+.qx-detail-card .kind{color:var(--muted);font-size:.86rem}
+.qx-spotify{display:inline-flex;gap:.5rem;align-items:center;margin-top:1rem;color:var(--cy);letter-spacing:.06em;border:1px solid var(--line-cy);border-radius:999px;padding:.55rem 1.1rem;font-size:.85rem}
+.qx-detail-x{position:absolute;top:18px;right:22px;color:#948dab;background:none;border:0;font-size:1.7rem;cursor:pointer;line-height:1}
+
+@media(prefers-reduced-motion:reduce){.qx .slider{animation:none}}

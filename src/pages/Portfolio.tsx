@@ -1,242 +1,378 @@
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
-import { site } from "@/lib/site";
-import { useParallax } from "@/hooks/useParallax";
 import ArtworkOrbit, { type Artwork } from "@/components/portfolio/ArtworkOrbit";
-import heroBg from "@/assets/backgrounds/hero-main.webp";
+import scene from "@/assets/portfolio/scene-figure.webp";
+import "./portfolio.css";
 
-import art1 from "@/assets/portfolio/art-1.webp";
-import art2 from "@/assets/portfolio/art-2.webp";
-import art3 from "@/assets/portfolio/art-3.webp";
-import art4 from "@/assets/portfolio/art-4.webp";
+/* ---------------------------------------------------------------------------
+   Assety sa načítavajú automaticky z priečinkov — stačí hodiť webp do
+   príslušného priečinka v src/assets/portfolio/web/<sekcia>/ a objaví sa.
+   Metadáta (názvy, odkazy) sú voliteľné; keď chýbajú, názov sa odvodí z názvu súboru.
+--------------------------------------------------------------------------- */
+const artFiles = import.meta.glob("../assets/portfolio/web/artworks/*.{webp,jpg,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const logo2dFiles = import.meta.glob("../assets/portfolio/web/logos-2d/*.{webp,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const logo3dFiles = import.meta.glob("../assets/portfolio/web/logos-3d/*.{webp,jpg,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const drawingFiles = import.meta.glob("../assets/portfolio/web/drawings/*.{webp,jpg,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const merchFiles = import.meta.glob("../assets/portfolio/web/product-designs/*.{webp,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
 
-import logoBlaspheme from "@/assets/portfolio/logo-blaspheme.webp";
-import logoFredo from "@/assets/portfolio/logo-fredo.webp";
-import logoGudmyDark from "@/assets/portfolio/logo-gudmy-dark.webp";
-import logoGudmyLight from "@/assets/portfolio/logo-gudmy-light.webp";
+const base = (p: string) => p.split("/").pop()!.replace(/\.\w+$/, "");
+const pretty = (s: string) => s.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-import merchFront from "@/assets/portfolio/merch-hoodie-front.webp";
-import merchSide from "@/assets/portfolio/merch-hoodie-side.webp";
-import merchBack from "@/assets/portfolio/merch-hoodie-back.webp";
-import merchScarf from "@/assets/portfolio/merch-scarf.webp";
+/** Zoradí súbory podľa poradia v `order` (podľa basename), zvyšok pridá na koniec. */
+function ordered(files: Record<string, string>, order: string[]): { b: string; url: string }[] {
+  const map = new Map(Object.entries(files).map(([p, u]) => [base(p), u]));
+  const out: { b: string; url: string }[] = [];
+  order.forEach((b) => { if (map.has(b)) { out.push({ b, url: map.get(b)! }); map.delete(b); } });
+  map.forEach((url, b) => out.push({ b, url }));
+  return out;
+}
 
-// Doplň sem skutočné artworky aj odkazy. `spotify` je voliteľné –
-// keď chýba, tlačidlo sa v detaile jednoducho nezobrazí.
-const ARTWORKS: Artwork[] = [
-  { src: art1, title: "Fredo", kind: "Single cover" },
-  { src: art2, title: "Quantryx", kind: "Album cover" },
-  { src: art3, title: "Gudmy", kind: "Merch artwork" },
-  { src: art4, title: "Gudmy", kind: "Textile print" },
+/* ---- Artworks (covers) ---- */
+const ART_META: Record<string, { title: string; kind: string; spotify?: string }> = {
+  "alchemist": { title: "Alchemist", kind: "EP cover", spotify: "https://open.spotify.com/album/6XKqSGKDGdKjaDsUNvghoT" },
+  "beyond-matter": { title: "Beyond Matter", kind: "Single", spotify: "https://open.spotify.com/track/4EYXz7bNZRYc9Oz25C0ngI" },
+  "construct-of-mind": { title: "Construct of Mind", kind: "Single", spotify: "https://open.spotify.com/track/6LFzV7O9zRUJtBc0H1gTqP" },
+  "cosmic-journey": { title: "Cosmic Journey", kind: "Single", spotify: "https://open.spotify.com/track/31ZatoKx39n6khRes5feOL" },
+  "evolve": { title: "Evolve", kind: "Single", spotify: "https://open.spotify.com/track/4SeXKlXbxqNR4ONyj3siAk" },
+  "explore": { title: "Explore", kind: "Album", spotify: "https://open.spotify.com/album/2Hw4rQtAkXk4Xme0XMhrRE" },
+  "metagalactic-quest": { title: "Metagalactic Quest", kind: "Album", spotify: "https://open.spotify.com/album/65DGvlBdh9Ut71DaYIjDJA" },
+  "new-level": { title: "New Level", kind: "Album", spotify: "https://open.spotify.com/album/52tK7knx0QH2foR1nYghku" },
+  "blooming-within": { title: "Blooming Within", kind: "Single" },
+  "chronon-particles": { title: "Chronon Particles", kind: "Single" },
+  "energy-waves": { title: "Energy Waves", kind: "Single" },
+  "lost-entrance": { title: "Lost Entrance", kind: "Single" },
+};
+const ART_ORDER = ["alchemist", "beyond-matter", "construct-of-mind", "cosmic-journey", "evolve", "explore", "metagalactic-quest", "new-level", "blooming-within", "chronon-particles", "energy-waves", "lost-entrance"];
+const ARTWORKS: Artwork[] = ordered(artFiles, ART_ORDER).map(({ b, url }) => ({
+  url, title: ART_META[b]?.title ?? pretty(b), kind: ART_META[b]?.kind, spotify: ART_META[b]?.spotify,
+}));
+
+/* ---- 2D logos ---- */
+const LOGO2D_META: Record<string, { name: string; sub: string }> = {
+  "quantryx-white": { name: "Quantryx", sub: "Brand mark" },
+  "blaspheme": { name: "Blaspheme", sub: "Band logo" },
+  "fredo": { name: "Fredo", sub: "Artist logo" },
+  "exacta": { name: "Exacta", sub: "Graffiti" },
+};
+const LOGOS2D = ordered(logo2dFiles, ["quantryx-white", "blaspheme", "fredo", "exacta"]).map(({ b, url }) => ({
+  url, name: LOGO2D_META[b]?.name ?? pretty(b), sub: LOGO2D_META[b]?.sub ?? "Logo",
+}));
+
+/* ---- 3D logos ---- */
+const LOGO3D_META: Record<string, string> = {
+  "qsp-3d-1": "QSP 3D · I", "qsp-3d-2": "QSP 3D · II", "qsp-3d-3": "QSP 3D · III", "blasphemy": "Blasphemy 3D",
+};
+const LOGOS3D = ordered(logo3dFiles, ["qsp-3d-1", "qsp-3d-2", "qsp-3d-3", "blasphemy"]).map(({ b, url }) => ({
+  url, title: LOGO3D_META[b] ?? pretty(b),
+}));
+
+/* ---- Drawings ---- */
+const DRAW_META: Record<string, string> = { "third-eye": "Third Eye", "meduza": "Meduza", "sketch-6": "Untitled VI", "sketch-7": "Untitled VII" };
+const DRAWINGS = ordered(drawingFiles, ["third-eye", "meduza", "sketch-6", "sketch-7"]).map(({ b, url }) => ({
+  url, title: DRAW_META[b] ?? pretty(b),
+}));
+
+/* ---- Merch ---- */
+const MERCH_META: Record<string, string> = {
+  "merch-hoodie-front": "Front", "merch-hoodie-side": "Side", "merch-hoodie-back": "Back", "merch-scarf": "Scarf",
+};
+const MERCH = ordered(merchFiles, ["merch-hoodie-front", "merch-hoodie-side", "merch-hoodie-back", "merch-scarf"]).map(({ b, url }) => ({
+  url, angle: MERCH_META[b] ?? pretty(b),
+}));
+
+/* ---- Motion (self-hosted z public/portfolio/motion) ---- */
+type Clip = { title: string; poster: string; loop?: string };
+const MOTION: Clip[] = [
+  { title: "Abstract Cube", poster: "/portfolio/motion/poster-0.webp", loop: "/portfolio/motion/loop-0.mp4" },
+  { title: "Red Tech Eye", poster: "/portfolio/motion/poster-1.webp", loop: "/portfolio/motion/loop-1.mp4" },
+  { title: "Organic Portal", poster: "/portfolio/motion/poster-2.webp", loop: "/portfolio/motion/loop-2.mp4" },
+  { title: "Laser Boss Fight", poster: "/portfolio/motion/poster-3.webp", loop: "/portfolio/motion/loop-3.mp4" },
+  { title: "K-Hop", poster: "/portfolio/motion/poster-4.webp", loop: "/portfolio/motion/loop-4.mp4" },
+  { title: "Metagalactic Quest", poster: "/portfolio/motion/poster-5.webp", loop: "/portfolio/motion/loop-5.mp4" },
+  { title: "Bluetech Ball", poster: "/portfolio/motion/poster-6.webp" },
+  { title: "Phaseshift Fog", poster: "/portfolio/motion/poster-7.webp" },
+  { title: "Organic Wireframe", poster: "/portfolio/motion/poster-8.webp" },
+  { title: "Unknown World", poster: "/portfolio/motion/poster-9.webp" },
 ];
 
-const LOGOS = [
-  { src: logoBlaspheme, name: "Blaspheme", kind: "Band logo", light: true },
-  { src: logoFredo, name: "Fredo", kind: "Artist logo" },
-  { src: logoGudmyDark, name: "Gudmy", kind: "Logo — dark", light: true },
-  { src: logoGudmyLight, name: "Gudmy", kind: "Logo — light" },
-];
-
-const MERCH = [
-  { src: merchFront, name: "Gudmy hoodie", kind: "Front" },
-  { src: merchSide, name: "Gudmy hoodie", kind: "Side" },
-  { src: merchBack, name: "Gudmy hoodie", kind: "Back" },
-  { src: merchScarf, name: "Gudmy scarf", kind: "All-over print" },
-];
-
-/** Nadpis sekcie, ktorý sa pri rolovaní jemne dvíha. */
-const SectionHead = ({
-  eyebrow,
-  title,
-  note,
-  shift,
-}: {
-  eyebrow: string;
-  title: string;
-  note?: string;
-  shift: number;
-}) => (
-  <header
-    className="mb-10 will-change-transform"
-    style={{ transform: `translateY(${shift}px)` }}
-  >
-    <p className="text-xs uppercase tracking-[0.35em] text-primary/80">{eyebrow}</p>
-    <h2 className="mt-3 text-3xl font-bold text-glow md:text-4xl">{title}</h2>
-    {note && <p className="mt-3 max-w-xl text-muted-foreground">{note}</p>}
-  </header>
+const SectionHead = ({ eyebrow, title, note }: { eyebrow: string; title: string; note?: string }) => (
+  <div className="sec-head">
+    <span className="eyebrow">{eyebrow}</span>
+    <h2 className="sec-title">{title}</h2>
+    {note && <p className="sec-note">{note}</p>}
+  </div>
 );
 
-const Portfolio = () => {
-  const hero = useParallax<HTMLDivElement>();
-  const orbit = useParallax<HTMLDivElement>();
-  const logos = useParallax<HTMLDivElement>();
-  const merch = useParallax<HTMLDivElement>();
+/* ======================= 2D LOGOS — magnifier + codex ===================== */
+const LogoWall = () => {
+  const lensRef = useRef<HTMLDivElement>(null);
+  const [codex, setCodex] = useState<{ url: string; name: string; sub: string } | null>(null);
+
+  const move = (e: React.PointerEvent) => {
+    const lens = lensRef.current;
+    if (!lens) return;
+    const tile = (e.target as HTMLElement).closest(".ltile");
+    const img = tile?.querySelector("img") as HTMLImageElement | null;
+    if (!img) { lens.classList.remove("on"); return; }
+    const r = img.getBoundingClientRect();
+    if (!r.width) { lens.classList.remove("on"); return; }
+    const zoom = 2.4, half = 100;
+    lens.style.backgroundImage = `url(${img.src})`;
+    lens.style.backgroundSize = `${r.width * zoom}px ${r.height * zoom}px`;
+    lens.style.backgroundPosition = `${half - (e.clientX - r.left) * zoom}px ${half - (e.clientY - r.top) * zoom}px`;
+    lens.style.left = `${e.clientX - half}px`;
+    lens.style.top = `${e.clientY - half}px`;
+    lens.classList.add("on");
+  };
+  const leave = () => lensRef.current?.classList.remove("on");
+
+  useEffect(() => {
+    if (!codex) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setCodex(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [codex]);
 
   return (
-    <AppLayout>
-      {/* ---------- ÚVOD ---------- */}
-      <section
-        ref={hero.ref}
-        className="relative overflow-hidden border-b border-primary/10 px-6 pb-24 pt-20"
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center opacity-35 will-change-transform"
+    <>
+      <div className="loga" onPointerMove={move} onPointerLeave={leave}>
+        <div className="loga-grid">
+          {LOGOS2D.map((l) => (
+            <button className="ltile" key={l.url} onClick={() => setCodex(l)}>
+              <img src={l.url} alt={l.name} />
+              <span className="sub">{l.sub}</span>
+              <span className="zi">⌕</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="qx-lens" ref={lensRef} />
+      {codex && (
+        <div className="qx-codex open" onClick={(e) => { if (e.target === e.currentTarget) setCodex(null); }}>
+          <div className="qx-codex-panel">
+            <span className="qx-c tl" /><span className="qx-c tr" /><span className="qx-c bl" /><span className="qx-c br" />
+            <button className="qx-codex-x" onClick={() => setCodex(null)} aria-label="Close">✕</button>
+            <div className="qx-codex-eyebrow">Quantryx · Identity</div>
+            <div className="qx-codex-fig"><img src={codex.url} alt={codex.name} /></div>
+            <h3>{codex.name}</h3>
+            <div className="k">{codex.sub}</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ======================= 3D LOGOS — click-through ======================== */
+const Carousel3D = () => {
+  const [cur, setCur] = useState(0);
+  const n = LOGOS3D.length;
+  const at = (i: number) => {
+    let off = ((i - cur) % n + n) % n;
+    if (off > n / 2) off -= n;
+    if (off === 0) return { transform: "translateX(0) scale(1)", opacity: 1, filter: "none", zIndex: 5 };
+    if (off === 1) return { transform: "translateX(58%) scale(.8) rotateY(-22deg)", opacity: .5, filter: "blur(2px)", zIndex: 3 };
+    if (off === -1) return { transform: "translateX(-58%) scale(.8) rotateY(22deg)", opacity: .5, filter: "blur(2px)", zIndex: 3 };
+    return { transform: "scale(.6)", opacity: 0, zIndex: 1 };
+  };
+  return (
+    <>
+      <div className="carou">
+        <button className="c-arrow prev" onClick={() => setCur((c) => (c - 1 + n) % n)} aria-label="Previous">‹</button>
+        <button className="c-arrow next" onClick={() => setCur((c) => (c + 1) % n)} aria-label="Next">›</button>
+        {LOGOS3D.map((o, i) => (
+          <div className="c-item" key={o.url} style={at(i) as React.CSSProperties}>
+            <img src={o.url} alt={o.title} />
+          </div>
+        ))}
+      </div>
+      <div className="c-cap">{LOGOS3D[cur]?.title}</div>
+    </>
+  );
+};
+
+/* ======================= MOTION — player + mini grid ===================== */
+const MotionPlayer = () => {
+  const [i, setI] = useState(0);
+  const clip = MOTION[i];
+  return (
+    <div className="motion">
+      <div className="player">
+        {clip.loop ? (
+          <video key={clip.loop} src={clip.loop} muted loop autoPlay playsInline />
+        ) : (
+          <img src={clip.poster} alt={clip.title} />
+        )}
+        <div className="pmeta"><span>{clip.title}</span><span className="full">{clip.loop ? "live loop" : "full version"}</span></div>
+      </div>
+      <div className="mini-grid">
+        {MOTION.map((c, idx) => (
+          <button className={`mini${idx === i ? " on" : ""}`} key={c.poster} onClick={() => setI(idx)}>
+            <img src={c.poster} alt={c.title} loading="lazy" />
+            {c.loop && <span className="dot" />}
+            <span className="cap">{c.title}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ======================= DRAWINGS — pile + lightbox ====================== */
+const Sketchbook = () => {
+  const [top, setTop] = useState(-1);
+  const [box, setBox] = useState<{ url: string; title: string } | null>(null);
+  const rot = [-13, -4, 6, 15];
+  const style = (i: number): React.CSSProperties => {
+    const isTop = i === top;
+    return {
+      transform: `translate(${(i - (DRAWINGS.length - 1) / 2) * 62}px, ${Math.abs(i - (DRAWINGS.length - 1) / 2) * 10}px) rotate(${isTop ? 0 : rot[i % rot.length]}deg)${isTop ? " scale(1.08)" : ""}`,
+      zIndex: isTop ? 50 : i + 1,
+    };
+  };
+  return (
+    <>
+      <div className="sketch">
+        {DRAWINGS.map((d, i) => (
+          <button className="paper" key={d.url} style={style(i)}
+            onClick={() => (top === i ? setBox(d) : setTop(i))}>
+            <img src={d.url} alt={d.title} loading="lazy" />
+            <span className="cap">{d.title}</span>
+          </button>
+        ))}
+      </div>
+      {box && (
+        <div className="qx-detail open" onClick={(e) => { if (e.target === e.currentTarget) setBox(null); }}>
+          <button className="qx-detail-x" onClick={() => setBox(null)} aria-label="Close">✕</button>
+          <div className="qx-detail-card">
+            <img src={box.url} alt={box.title} />
+            <h3>{box.title}</h3>
+            <div className="kind">Drawing</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ======================= FUN — drag board =============================== */
+const LABS = ["GLITCH", "404", "TRYX", "WIP", "LOL", "∆", "RAVE", "?!"];
+const GRAD = [["#7c3aed", "#1ec8ee"], ["#e64bd0", "#7c3aed"], ["#1ec8ee", "#22d3ee"], ["#f59e0b", "#e64bd0"], ["#22c55e", "#1ec8ee"], ["#b79bff", "#e64bd0"], ["#06b6d4", "#3b82f6"], ["#e11d48", "#7c3aed"]];
+const ScrapBoard = () => {
+  const board = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ el: HTMLElement; ox: number; oy: number } | null>(null);
+  const onDown = (e: React.PointerEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    const r = el.getBoundingClientRect();
+    drag.current = { el, ox: e.clientX - r.left, oy: e.clientY - r.top };
+    el.style.zIndex = "99"; el.setPointerCapture(e.pointerId); e.preventDefault();
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current, b = board.current;
+    if (!d || !b) return;
+    const rb = b.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rb.width - d.el.offsetWidth, e.clientX - rb.left - d.ox));
+    const y = Math.max(0, Math.min(rb.height - d.el.offsetHeight, e.clientY - rb.top - d.oy));
+    d.el.style.left = `${x}px`; d.el.style.top = `${y}px`; d.el.style.transform = "rotate(0deg)";
+  };
+  const onUp = () => { drag.current = null; };
+  return (
+    <div className="board" ref={board} onPointerMove={onMove} onPointerUp={onUp}>
+      {LABS.map((l, i) => (
+        <div className="sticker" key={l} onPointerDown={onDown}
           style={{
-            backgroundImage: `url(${heroBg})`,
-            transform: `scale(1.15) translateY(${(hero.progress - 0.5) * 60}px)`,
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 cyber-grid opacity-25 will-change-transform"
-          style={{ transform: `translateY(${(hero.progress - 0.5) * -80}px)` }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(55%_45%_at_50%_0%,hsl(var(--primary)/0.22),transparent_70%)] will-change-transform"
-          style={{ transform: `translateY(${(hero.progress - 0.5) * 140}px)` }}
-        />
-        <div className="container mx-auto max-w-5xl">
-          <p className="text-xs uppercase tracking-[0.4em] text-primary/80">Portfolio</p>
-          <h1
-            className="mt-4 text-5xl font-bold leading-[0.95] text-glow md:text-7xl will-change-transform"
-            style={{ transform: `translateY(${(hero.progress - 0.5) * -40}px)` }}
-          >
-            Covers, logos
-            <br />
-            and things
-            <br />
-            people wear.
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Visual work for music — drawn, modelled and rendered by hand. Nothing on this page
-            was generated.
-          </p>
-        </div>
-      </section>
+            left: `${20 + (i % 4) * 150}px`, top: `${26 + Math.floor(i / 4) * 160}px`,
+            transform: `rotate(${(i * 37) % 40 - 20}deg)`,
+            background: `linear-gradient(150deg, ${GRAD[i][0]}, ${GRAD[i][1]})`,
+          }}>{l}</div>
+      ))}
+      <div className="board-tip">drag the stickers</div>
+    </div>
+  );
+};
 
-      {/* ---------- ARTWORKY V KRUHU ---------- */}
-      <section ref={orbit.ref} className="relative overflow-hidden px-6 py-24">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(50%_40%_at_50%_50%,hsl(var(--neon)/0.12),transparent_70%)] will-change-transform"
-          style={{ transform: `scale(${1 + (orbit.progress - 0.5) * 0.3})` }}
-        />
-        <div className="container mx-auto max-w-5xl">
-          <SectionHead
-            eyebrow="Artworks"
-            title="Cover art"
-            note="Singles, EPs and albums. Drag the ring to spin it."
-            shift={(orbit.progress - 0.5) * -30}
-          />
-          <div className="mx-auto max-w-3xl" style={{ transform: `translateY(${(orbit.progress - 0.5) * -50}px)` }}>
-            <ArtworkOrbit items={ARTWORKS} />
-          </div>
+/* ======================= MERCH — angle switcher ========================= */
+const MerchViewer = () => {
+  const [i, setI] = useState(0);
+  return (
+    <div className="merch">
+      <div className="garment">
+        {MERCH.map((m, idx) => (
+          <div className={`gv${idx === i ? " on" : ""}`} key={m.url}><img src={m.url} alt={m.angle} /></div>
+        ))}
+      </div>
+      <div>
+        <div className="angles">
+          {MERCH.map((m, idx) => (
+            <button className={`angle-btn${idx === i ? " on" : ""}`} key={m.angle} onClick={() => setI(idx)}>{m.angle}</button>
+          ))}
         </div>
-      </section>
+        <p className="sec-note">Quantryx apparel — hoodie from three angles plus an all-over print scarf.</p>
+      </div>
+    </div>
+  );
+};
 
-      {/* ---------- LOGÁ ---------- */}
-      <section ref={logos.ref} className="relative overflow-hidden border-t border-primary/10 px-6 py-24">
-        <div className="container mx-auto max-w-5xl">
-          <SectionHead
-            eyebrow="Identity"
-            title="Logos"
-            note="Lettering built to survive a shirt print, a stage banner and a 32-pixel avatar."
-            shift={(logos.progress - 0.5) * -30}
-          />
-          <div className="grid gap-6 sm:grid-cols-2">
-            {LOGOS.map((logo, i) => (
-              <figure
-                key={logo.src}
-                className="cyber-frame will-change-transform"
-                style={{
-                  // Striedavý posun stĺpcov – mriežka sa pri rolovaní rozvlní.
-                  transform: `translateY(${(logos.progress - 0.5) * (i % 2 ? 40 : -40)}px)`,
-                }}
-              >
-                <div className="cyber-frame-inner">
-                  <div
-                    className={`grid place-items-center p-8 ${
-                      logo.light ? "bg-white/90" : "bg-black/40"
-                    }`}
-                  >
-                    <img
-                      src={logo.src}
-                      alt={`${logo.name} — ${logo.kind}`}
-                      loading="lazy"
-                      className="max-h-40 w-auto object-contain"
-                    />
-                  </div>
-                  <figcaption className="flex items-baseline justify-between p-4">
-                    <span className="font-medium">{logo.name}</span>
-                    <span className="text-sm text-muted-foreground">{logo.kind}</span>
-                  </figcaption>
-                </div>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
+/* ============================== PAGE ==================================== */
+const Portfolio = () => {
+  return (
+    <AppLayout>
+      <div className="qx">
+        {/* Artworks orbit — immersive opener, no labels */}
+        <section id="artworks">
+          <ArtworkOrbit items={ARTWORKS} figure={scene} />
+        </section>
 
-      {/* ---------- MERCH ---------- */}
-      <section ref={merch.ref} className="relative overflow-hidden border-t border-primary/10 px-6 py-24">
-        <div className="container mx-auto max-w-6xl">
-          <SectionHead
-            eyebrow="Collection"
-            title="Merch"
-            note="Gudmy — hoodie from three angles and an all-over print scarf."
-            shift={(merch.progress - 0.5) * -30}
-          />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {MERCH.map((item, i) => (
-              <figure
-                key={item.src}
-                className="group overflow-hidden rounded-xl border border-border/50 bg-black/30 will-change-transform"
-                style={{ transform: `translateY(${(merch.progress - 0.5) * (-20 - i * 14)}px)` }}
-              >
-                <img
-                  src={item.src}
-                  alt={`${item.name} — ${item.kind}`}
-                  loading="lazy"
-                  className="aspect-[9/16] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <figcaption className="flex items-baseline justify-between p-4">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-sm text-muted-foreground">{item.kind}</span>
-                </figcaption>
-              </figure>
-            ))}
+        <section className="sec" id="logos2d">
+          <div className="wrap">
+            <SectionHead eyebrow="02 · 2D Logos & graffiti" title="Move the light"
+              note="Lettering built to survive a shirt print, a stage banner and a 32-pixel avatar. Sweep your cursor and the logos magnify; click one to inspect it up close." />
+            <LogoWall />
+            <p className="tip">magnify · click a logo to inspect</p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ---------- MOTION ---------- */}
-      <section className="border-t border-primary/10 px-6 py-24">
-        <div className="container mx-auto max-w-5xl">
-          <SectionHead eyebrow="Moving" title="Motion design" shift={0} />
-          <div className="rounded-xl border border-dashed border-border/60 p-12 text-center text-muted-foreground">
-            Videos land here next.
+        <section className="sec" id="logos3d">
+          <div className="wrap">
+            <SectionHead eyebrow="03 · 3D Logos & renders" title="In three dimensions"
+              note="Logos taken into 3D. For now a simple click-through — real rotatable 3D objects will land here later." />
+            <Carousel3D />
           </div>
+        </section>
 
-          <div className="mt-16 flex flex-wrap items-center gap-3">
-            <a href={`mailto:${site.email}?subject=Design%20enquiry`}>
-              <Button size="lg">Work with me</Button>
-            </a>
-            <Link to="/design">
-              <Button size="lg" variant="outline">
-                What I offer
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+        <section className="sec" id="motion">
+          <div className="wrap">
+            <SectionHead eyebrow="04 · Motion design" title="Choose what you want to see"
+              note="The selected clip plays on the left; hover a preview on the right (it shows the title and grows), click and it plays. Full versions stay self-hosted and light." />
+            <MotionPlayer />
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="sec" id="drawings">
+          <div className="wrap">
+            <SectionHead eyebrow="05 · Drawings" title="The sketchbook"
+              note="Where everything starts — by hand, on paper. Click a sheet to pull it to the top, click again to open it large." />
+            <Sketchbook />
+            <p className="tip">click a sheet</p>
+          </div>
+        </section>
+
+        <section className="sec" id="fun">
+          <div className="wrap">
+            <SectionHead eyebrow="06 · Fun stuff" title="Scrap board"
+              note="Experiments, memes, throwaways, happy accidents. Grab them and toss them around — no rules here." />
+            <ScrapBoard />
+          </div>
+        </section>
+
+        <section className="sec" id="merch">
+          <div className="wrap">
+            <SectionHead eyebrow="07 · Product designs" title="Wearable"
+              note="Quantryx apparel — turn it around before you decide. Switch the angle and the piece rotates to face you." />
+            <MerchViewer />
+          </div>
+        </section>
+      </div>
     </AppLayout>
   );
 };

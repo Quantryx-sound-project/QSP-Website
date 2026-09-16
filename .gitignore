@@ -30,3 +30,14 @@ dist-ssr
 
 # Lockfile from other package manager (project uses npm)
 bun.lockb
+
+# Portfolio raw originals (heavy source, not deployed — optimized copies live in src/assets/portfolio/web and public/portfolio)
+src/assets/portfolio/_web_tmp/
+src/assets/portfolio/_web_tmp.tgz
+src/assets/portfolio/2DLogos_grafits/
+src/assets/portfolio/3DLogos_grafits/
+src/assets/portfolio/Motion design/
+src/assets/portfolio/artworks/
+src/assets/portfolio/drawings/
+src/assets/portfolio/funstuff/
+src/assets/portfolio/product designs/
