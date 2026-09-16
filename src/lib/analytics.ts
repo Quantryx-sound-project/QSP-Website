@@ -24,6 +24,9 @@ interface TrackPayload {
   props?: Record<string, unknown>;
 }
 
+/** Emaily (admin/tester), ktoré do analytiky nerátame. */
+const IGNORED_EMAILS = new Set(["quantryxmusic@gmail.com"]);
+
 /**
  * ID relácie. Zámerne len v pamäti – po obnovení stránky vznikne nové.
  * Mierne to nadhodnotí počet relácií, ale nezapíše to nič do zariadenia.
@@ -110,6 +113,11 @@ export async function track(event: AnalyticsEvent, payload: TrackPayload = {}): 
     // Ak je človek prihlásený, priložíme token, nech sa udalosť
     // dá priradiť k účtu. Server si ho overí sám.
     const { data } = await supabase.auth.getSession();
+
+    // Admina do analytiky nerátame – nič ani neodošleme.
+    const email = data.session?.user?.email?.toLowerCase();
+    if (email && IGNORED_EMAILS.has(email)) return;
+
     const token = data.session?.access_token;
 
     await fetch(FUNCTION_URL, {

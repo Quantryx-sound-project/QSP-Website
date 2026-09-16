@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { X } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ type Summary = {
   returning_users: number;
   checkout_starts: number;
   purchases: number;
+  waitlist: number;
 };
 type PathRow = { path: string; views: number; visitors: number; pct_of_visitors: number | null };
 type ClickRow = { label: string; clicks: number; visitors: number; pct_of_visitors: number | null };
@@ -31,6 +33,18 @@ type AcquisitionRow = {
   revenue: number;
   conversion_pct: number | null;
 };
+type RegistrationRow = { id: string; email: string; name: string | null; country: string | null; created_at: string };
+type WaitlistRow = {
+  id: string;
+  kind: string;
+  name: string | null;
+  email: string | null;
+  instagram: string | null;
+  specialization: string | null;
+  message: string | null;
+  created_at: string;
+};
+type ListView = "registrations" | "waitlist" | null;
 
 /**
  * Typy pre RPC funkcie vzniknú až keď sa znovu vygeneruje types.ts
@@ -48,6 +62,13 @@ const RANGES = [
   { days: 90, label: "90 dní" },
 ];
 
+const fmtDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleString("sk-SK", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};
+
+const kindLabel = (k: string) => (k === "collab" ? "Spolupráca" : k === "early_access" ? "Early access" : k);
+
 /** Vodorovný pruh – podiel voči najväčšej hodnote v tabuľke. */
 const Bar = ({ value, max }: { value: number; max: number }) => (
   <div className="h-1.5 w-full rounded-full bg-muted">
@@ -58,12 +79,21 @@ const Bar = ({ value, max }: { value: number; max: number }) => (
   </div>
 );
 
-const Stat = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
-  <Card>
+const Stat = ({
+  label, value, hint, onClick,
+}: { label: string; value: string; hint?: string; onClick?: () => void }) => (
+  <Card
+    className={onClick ? "cursor-pointer transition hover:border-primary/60 hover:shadow-[0_0_26px_-8px_hsl(var(--primary)/0.55)]" : ""}
+    onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => (e.key === "Enter" || e.key === " ") && onClick() : undefined}
+  >
     <CardContent className="pt-6">
       <div className="text-sm text-muted-foreground">{label}</div>
       <div className="mt-1 text-3xl font-bold tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
+      {onClick && <div className="mt-2 text-xs font-medium text-primary">Zobraziť zoznam →</div>}
     </CardContent>
   </Card>
 );
@@ -84,6 +114,12 @@ const Admin = () => {
   const [journeys, setJourneys] = useState<JourneyRow[]>([]);
   const [exits, setExits] = useState<ExitRow[]>([]);
   const [acquisition, setAcquisition] = useState<AcquisitionRow[]>([]);
+
+  // Zoznamy (registrácie / waitlist) – načítajú sa až po kliknutí.
+  const [listView, setListView] = useState<ListView>(null);
+  const [listLoading, setListLoading] = useState(false);
+  const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
 
   // Overenie práv – server rozhoduje, nie klient.
   useEffect(() => {
@@ -127,6 +163,23 @@ const Admin = () => {
     };
   }, [isAdmin, days]);
 
+  const openList = async (view: Exclude<ListView, null>) => {
+    setListView(view);
+    setListLoading(true);
+    const fn = view === "registrations" ? "analytics_registrations" : "analytics_waitlist";
+    const { data } = await rpc(fn);
+    if (view === "registrations") setRegistrations((data as RegistrationRow[] | null) ?? []);
+    else setWaitlist((data as WaitlistRow[] | null) ?? []);
+    setListLoading(false);
+  };
+
+  useEffect(() => {
+    if (!listView) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setListView(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [listView]);
+
   const maxPathVisitors = useMemo(() => Math.max(1, ...paths.map((r) => r.visitors)), [paths]);
   const maxClicks = useMemo(() => Math.max(1, ...clicks.map((r) => r.clicks)), [clicks]);
   const maxSource = useMemo(() => Math.max(1, ...sources.map((r) => r.visitors)), [sources]);
@@ -165,7 +218,7 @@ const Admin = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Návštevnosť</h1>
-            <p className="text-muted-foreground">Vlastné dáta, bez cookies a bez tretej strany.</p>
+            <p className="text-muted-foreground">Vlastné dáta, bez cookies a bez tretej strany. Admin sa neráta.</p>
           </div>
           <div className="flex gap-2">
             {RANGES.map((r) => (
@@ -196,7 +249,14 @@ const Admin = () => {
               <Stat
                 label="Registrácie"
                 value={String(summary.sign_ups)}
-                hint={`${conversion(summary.sign_ups, summary.visitors)} z návštevníkov · zdroj: profiles`}
+                hint={`${conversion(summary.sign_ups, summary.visitors)} z návštevníkov`}
+                onClick={() => openList("registrations")}
+              />
+              <Stat
+                label="Waitlist"
+                value={String(summary.waitlist)}
+                hint="ľudia prihlásení do waitlistu"
+                onClick={() => openList("waitlist")}
               />
               <Stat
                 label="Vracajúci sa"
@@ -213,7 +273,6 @@ const Admin = () => {
                 value={String(summary.purchases)}
                 hint={`${conversion(summary.purchases, summary.visitors)} z návštevníkov`}
               />
-              <Stat label="Relácie" value={String(summary.sessions)} />
             </div>
 
             <Card className="mt-10">
@@ -395,6 +454,96 @@ const Admin = () => {
           </>
         )}
       </div>
+
+      {/* ---------- Zoznam: registrácie / waitlist ---------- */}
+      {listView && (
+        <div
+          className="fixed inset-0 z-[120] grid place-items-center bg-background/80 p-4 backdrop-blur-sm sm:p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setListView(null); }}
+        >
+          <Card className="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden">
+            <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+              <div>
+                <CardTitle>{listView === "registrations" ? "Registrácie" : "Waitlist"}</CardTitle>
+                <CardDescription>
+                  {listView === "registrations"
+                    ? `${registrations.length} účtov · admin nezahrnutý`
+                    : `${waitlist.length} prihlásených`}
+                </CardDescription>
+              </div>
+              <button
+                onClick={() => setListView(null)}
+                aria-label="Zavrieť"
+                className="rounded-md p-1 text-muted-foreground transition hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </CardHeader>
+            <CardContent className="overflow-auto">
+              {listLoading && <p className="py-6 text-sm text-muted-foreground">Načítavam…</p>}
+
+              {!listLoading && listView === "registrations" && (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="py-2 pr-4 font-medium">Email</th>
+                      <th className="py-2 pr-4 font-medium">Meno</th>
+                      <th className="py-2 pr-4 font-medium">Krajina</th>
+                      <th className="py-2 font-medium">Registrácia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrations.map((r) => (
+                      <tr key={r.id} className="border-b border-border/50 align-top">
+                        <td className="py-2 pr-4 font-medium">{r.email}</td>
+                        <td className="py-2 pr-4">{r.name ?? "–"}</td>
+                        <td className="py-2 pr-4">{r.country ?? "–"}</td>
+                        <td className="py-2 tabular-nums text-muted-foreground">{fmtDate(r.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {!listLoading && listView === "waitlist" && (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="py-2 pr-4 font-medium">Typ</th>
+                      <th className="py-2 pr-4 font-medium">Meno</th>
+                      <th className="py-2 pr-4 font-medium">Email</th>
+                      <th className="py-2 pr-4 font-medium">Instagram</th>
+                      <th className="py-2 pr-4 font-medium">Špecializácia</th>
+                      <th className="py-2 pr-4 font-medium">Správa</th>
+                      <th className="py-2 font-medium">Dátum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {waitlist.map((w) => (
+                      <tr key={w.id} className="border-b border-border/50 align-top">
+                        <td className="py-2 pr-4 whitespace-nowrap">{kindLabel(w.kind)}</td>
+                        <td className="py-2 pr-4">{w.name ?? "–"}</td>
+                        <td className="py-2 pr-4">{w.email ?? "–"}</td>
+                        <td className="py-2 pr-4">{w.instagram ?? "–"}</td>
+                        <td className="py-2 pr-4">{w.specialization ?? "–"}</td>
+                        <td className="py-2 pr-4 max-w-[22ch] truncate" title={w.message ?? ""}>{w.message ?? "–"}</td>
+                        <td className="py-2 tabular-nums whitespace-nowrap text-muted-foreground">{fmtDate(w.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {!listLoading && listView === "registrations" && registrations.length === 0 && (
+                <p className="py-6 text-sm text-muted-foreground">Zatiaľ žiadne registrácie.</p>
+              )}
+              {!listLoading && listView === "waitlist" && waitlist.length === 0 && (
+                <p className="py-6 text-sm text-muted-foreground">Zatiaľ nikto vo waitliste.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </AppLayout>
   );
 };

@@ -9,6 +9,7 @@
 //     deň a po 7 dňoch maže, takže hash sa nedá spätne rozlúštiť.
 //     → žiadne cookies, žiadny súhlas, žiadna cookie lišta
 //   * Boty sa zahodia podľa User-Agent skôr, než sa čokoľvek zapíše.
+//   * Prihlásený admin (quantryxmusic@gmail.com) sa do analytiky neráta.
 //
 // Nasadenie:
 //   supabase functions deploy track --no-verify-jwt
@@ -25,6 +26,9 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+// Emaily, ktoré do analytiky nerátame (admin/tester).
+const IGNORED_EMAILS = new Set(["quantryxmusic@gmail.com"]);
 
 // Udalosti, ktoré prijímame. Čokoľvek iné zahodíme, nech sa tabuľka
 // nedá zaplniť vymyslenými názvami.
@@ -136,7 +140,20 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  // 2. Denná soľ + hash návštevníka. IP sa nikam nezapíše.
+  // 2. Ak je človek prihlásený, priradíme udalosť k účtu.
+  //    Admina (quantryxmusic@gmail.com) do analytiky vôbec nezapisujeme.
+  let userId: string | null = null;
+  const authHeader = req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const { data } = await supabase.auth.getUser(authHeader.slice(7));
+    userId = data.user?.id ?? null;
+    const email = data.user?.email?.toLowerCase() ?? "";
+    if (email && IGNORED_EMAILS.has(email)) {
+      return new Response(null, { status: 204, headers: CORS });
+    }
+  }
+
+  // 3. Denná soľ + hash návštevníka. IP sa nikam nezapíše.
   const { data: salt, error: saltError } = await supabase.rpc("analytics_current_salt");
   if (saltError || !salt) {
     console.error("salt error", saltError);
@@ -148,14 +165,6 @@ Deno.serve(async (req) => {
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     "0.0.0.0";
   const visitorHash = await sha256(`${salt}|${ip}|${ua}`);
-
-  // 3. Ak je človek prihlásený, priradíme udalosť k účtu.
-  let userId: string | null = null;
-  const authHeader = req.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const { data } = await supabase.auth.getUser(authHeader.slice(7));
-    userId = data.user?.id ?? null;
-  }
 
   const props = (body.props && typeof body.props === "object") ? body.props : {};
 
