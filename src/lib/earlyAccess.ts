@@ -12,6 +12,10 @@ export const installerUrl = "/downloads/alter-earlyaccess-placeholder.txt";
 //   "https://www.buymeacoffee.com/quantryx".
 export const donationUrl = "https://buymeacoffee.com/quantryx";
 
+// Buy Me a Coffee používateľské meno (slug) — pre vnorený widget/overlay,
+// kde ľudia zaplatia priamo na stránke bez registrácie a bez presmerovania.
+export const bmcUsername = "quantryx";
+
 // Verzia buildu (zobrazí sa pri stiahnutí).
 export const earlyAccessVersion = "Early Access build";
 
