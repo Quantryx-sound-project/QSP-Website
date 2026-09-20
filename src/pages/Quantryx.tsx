@@ -15,9 +15,11 @@ import WaitlistSection from "@/components/WaitlistSection";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
+import { useAuth } from "@/hooks/useAuth";
 
 const Quantryx = () => {
   const { t } = useT();
+  const { session } = useAuth();
   const { open: menuOpen, setOpen: setMenuOpen, width, startResize } = useSidebar(true);
 
   // Aplikácie a pluginy zobrazené na homepage. Ďalšie doplníš pridaním položky.
@@ -106,12 +108,14 @@ const Quantryx = () => {
           </blockquote>
           <p className="text-base text-muted-foreground mb-10">{t("landing.heroSubtitle")}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link to="/pricing" onClick={() => trackClick("hero_pricing")}>
-              <Button size="lg">
-                {t("nav.pricing")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            {session && (
+              <Link to="/early-access" onClick={() => trackClick("hero_early_access")}>
+                <Button size="lg">
+                  Get Early Access
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
             <Link to="/about" onClick={() => trackClick("hero_about")}>
               <Button size="lg" variant="outline">
                 {t("landing.aboutCta")}

@@ -121,31 +121,11 @@ revoke all on function public.analytics_current_salt() from anon, authenticated;
 -- takže sa dajú volať z frontendu cez supabase.rpc(...).
 -- ============================================================
 
--- ID administrátorov sa používa na ich vylúčenie zo štatistík.
-create or replace function public.admin_ids()
-returns setof uuid
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select p.id
-  from public.profiles p
-  where p.is_admin = true
-     or lower(p.email) = 'quantryxmusic@gmail.com';
-$$;
-
-revoke all on function public.admin_ids() from public, anon, authenticated;
-
 -- 4a. Súhrn za obdobie: návštevníci, návštevy, zobrazenia, hĺbka
 --     Registrácie sa NErátajú z udalostí, ale z tabuľky profiles –
 --     tá je jediný zdroj pravdy a nemôže sa rozísť s analytikou.
 --     Prihlásenia rátame ako počet RÔZNYCH ľudí, ktorí sa vrátili;
 --     surový počet prihlásení nič nehovorí (jeden človek sa prihlási päťkrát).
--- Funkciu najprv odstránime, pretože PostgreSQL nedovolí cez CREATE OR REPLACE
--- rozšíriť jej návratový typ z 8 na 9 stĺpcov. Tabuliek ani dát sa to nedotkne.
-drop function if exists public.analytics_summary(integer);
-
 create or replace function public.analytics_summary(days integer default 30)
 returns table (
   visitors          bigint,
@@ -155,8 +135,7 @@ returns table (
   sign_ups          bigint,
   returning_users   bigint,
   checkout_starts   bigint,
-  purchases         bigint,
-  waitlist          bigint
+  purchases         bigint
 )
 language sql
 stable
@@ -167,7 +146,6 @@ as $$
     select * from public.analytics_events
     where public.is_admin()
       and occurred_at >= now() - make_interval(days => days)
-      and (user_id is null or user_id not in (select public.admin_ids()))
   )
   select
     count(distinct visitor_hash)                                              as visitors,
@@ -178,18 +156,13 @@ as $$
       / nullif(count(distinct session_id), 0), 2)                             as views_per_visit,
     (select count(*) from public.profiles
       where public.is_admin()
-        and created_at >= now() - make_interval(days => days)
-        and id not in (select public.admin_ids()))                            as sign_ups,
+        and created_at >= now() - make_interval(days => days))                as sign_ups,
     count(distinct user_id) filter (where event_name = 'sign_in')             as returning_users,
     count(distinct visitor_hash) filter (where event_name = 'checkout_start') as checkout_starts,
     (select count(*) from public.orders
       where public.is_admin()
         and status = 'paid'
-        and ordered_at >= now() - make_interval(days => days)
-        and (user_id is null or user_id not in (select public.admin_ids())))  as purchases,
-    (select count(*) from public.waitlist
-      where public.is_admin()
-        and lower(email) <> 'quantryxmusic@gmail.com')                        as waitlist
+        and ordered_at >= now() - make_interval(days => days))                as purchases
   from scope;
 $$;
 
@@ -381,9 +354,6 @@ grant execute on function
   public.is_admin()
   to authenticated;
 
--- admin_ids() nie je určená na priame volanie z klienta.
-revoke all on function public.admin_ids() from public, anon, authenticated;
-
 -- ---------- 5. UPRATOVANIE ----------
 -- Udalosti staršie ako rok zmaž (dá sa volať ručne alebo cez pg_cron).
 create or replace function public.analytics_prune()
@@ -561,71 +531,3 @@ grant execute on function
   public.analytics_journeys(integer, integer),
   public.analytics_exits(integer)
   to authenticated;
-
--- ============================================================
--- ADMIN ZOZNAMY
--- ============================================================
-
--- Zoznam registrácií okrem administrátorov.
-create or replace function public.analytics_registrations()
-returns table (
-  id uuid,
-  email text,
-  name text,
-  country text,
-  created_at timestamptz
-)
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select
-    p.id,
-    p.email::text,
-    p.name::text,
-    p.country::text,
-    p.created_at
-  from public.profiles p
-  where public.is_admin()
-    and p.id not in (select public.admin_ids())
-  order by p.created_at desc;
-$$;
-
--- Zoznam členov waitlistu.
-create or replace function public.analytics_waitlist()
-returns table (
-  id uuid,
-  kind text,
-  name text,
-  email text,
-  instagram text,
-  specialization text,
-  message text,
-  created_at timestamptz
-)
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select
-    w.id,
-    w.kind::text,
-    w.name::text,
-    w.email::text,
-    w.instagram::text,
-    w.specialization::text,
-    w.message::text,
-    w.created_at
-  from public.waitlist w
-  where public.is_admin()
-    and lower(w.email) <> 'quantryxmusic@gmail.com'
-  order by w.created_at desc;
-$$;
-
-revoke all on function public.analytics_registrations() from public, anon;
-revoke all on function public.analytics_waitlist() from public, anon;
-
-grant execute on function public.analytics_registrations() to authenticated;
-grant execute on function public.analytics_waitlist() to authenticated;

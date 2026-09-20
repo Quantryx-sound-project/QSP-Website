@@ -253,7 +253,7 @@ const Dashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <Button onClick={() => navigate("/pricing")}>
+                    <Button onClick={() => navigate("/early-access")}>
                       {t("account.membershipCta")}
                     </Button>
                   </div>
@@ -401,7 +401,7 @@ const Dashboard = () => {
                   {licenses.length === 0 ? (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <p className="text-muted-foreground">{t("account.licensesEmpty")}</p>
-                      <Button variant="outline" onClick={() => navigate("/pricing")}>
+                      <Button variant="outline" onClick={() => navigate("/early-access")}>
                         {t("account.browse")}
                       </Button>
                     </div>

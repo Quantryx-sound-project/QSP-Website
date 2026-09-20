@@ -190,6 +190,10 @@ export const translations = {
       ctaText: "Get started today.",
       notFound: "Product not found",
       seePricing: "See pricing",
+      salesNotLiveTitle: "Not on sale yet",
+      salesNotLive:
+        "The paid editions of Alter aren't on sale yet. Right now you can get the full version for free through Early Access while it's being tested.",
+      getEarlyAccess: "Get Early Access",
     },
     about: {
       badge: "Producer & sound designer",
@@ -629,6 +633,10 @@ export const translations = {
       ctaText: "Začni ešte dnes.",
       notFound: "Produkt sa nenašiel",
       seePricing: "Pozri si cenník",
+      salesNotLiveTitle: "Predaj ešte nie je spustený",
+      salesNotLive:
+        "Platené verzie Alteru zatiaľ nie sú v predaji. Teraz môžeš získať plnú verziu zadarmo cez Early Access, kým sa testuje.",
+      getEarlyAccess: "Získať Early Access",
     },
     about: {
       badge: "Producent & sound dizajnér",

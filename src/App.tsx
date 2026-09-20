@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { I18nProvider } from "@/lib/i18n";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Quantryx from "./pages/Quantryx";
@@ -20,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Portfolio from "./pages/Portfolio";
 import Design from "./pages/Design";
+import EarlyAccess from "./pages/EarlyAccess";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +37,22 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Quantryx />} />
-            <Route path="/pricing" element={<Pricing />} />
+            <Route
+              path="/pricing"
+              element={
+                <AdminRoute>
+                  <Pricing />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/early-access"
+              element={
+                <ProtectedRoute>
+                  <EarlyAccess />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/portfolio" element={<Portfolio />} />

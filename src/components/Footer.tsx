@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import { Mail, MapPin } from "lucide-react";
 import { site } from "@/lib/site";
 import { useT } from "@/lib/i18n";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useAuth } from "@/hooks/useAuth";
 
 const Footer = () => {
   const { t } = useT();
+  const isAdmin = useIsAdmin();
+  const { session } = useAuth();
   const activeSocials = site.socials.filter((s) => s.url);
 
   return (
@@ -27,7 +31,12 @@ const Footer = () => {
               <li><Link to="/product/listener" className="hover:text-foreground">{t("plans.listenerName")}</Link></li>
               <li><Link to="/product/creator" className="hover:text-foreground">{t("plans.creatorName")}</Link></li>
               <li><Link to="/product/pro" className="hover:text-foreground">{t("plans.proName")}</Link></li>
-              <li><Link to="/pricing" className="hover:text-foreground">{t("nav.pricing")}</Link></li>
+              {session && (
+                <li><Link to="/early-access" className="hover:text-foreground">Early Access</Link></li>
+              )}
+              {isAdmin && (
+                <li><Link to="/pricing" className="hover:text-foreground">{t("nav.pricing")}</Link></li>
+              )}
               <li><Link to="/about" className="hover:text-foreground">{t("nav.aboutFull")}</Link></li>
             </ul>
           </div>

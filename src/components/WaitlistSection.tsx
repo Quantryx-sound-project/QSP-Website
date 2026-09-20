@@ -114,6 +114,19 @@ const WaitlistSection = () => {
                   ? "We'll get back to you personally — keep an eye on your inbox / DMs."
                   : "You'll be the first to know when ALTER drops."}
               </p>
+
+              {/* Úprimné poďakovanie – bez tlaku, len od srdca. */}
+              <div className="mt-4 w-full max-w-md border-t border-border/40 pt-5">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  I build ALTER on my own — an indie developer, between classes and
+                  late nights, no big team behind it. You being here, backing
+                  something that isn't even finished yet, means more than you know.
+                  Every single signup and message keeps this going.
+                </p>
+                <p className="mt-3 text-sm font-medium text-primary">
+                  Thank you for being here with me. — Quantryx
+                </p>
+              </div>
             </div>
           </div>
         ) : kind === null ? (

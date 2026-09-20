@@ -41,3 +41,6 @@ src/assets/portfolio/artworks/
 src/assets/portfolio/drawings/
 src/assets/portfolio/funstuff/
 src/assets/portfolio/product designs/
+
+# Vite docasne config subory (generuju sa automaticky)
+vite.config.ts.timestamp-*.mjs

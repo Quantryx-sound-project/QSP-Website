@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, type LucideIcon } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, Rocket, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,8 @@ export const navItems: Item[] = [
 // Ceny patria k Alteru, tak su az tu - a hned ako prva polozka,
 // lebo to je najcastejsia otazka pred stiahnutim.
 const alterItems: Item[] = [
+  // Early Access je teraz hlavný vstup k Alteru (predaj ešte nebeží).
+  { to: "/early-access", label: "Early Access", icon: Rocket },
   { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
@@ -187,6 +189,14 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
   const navigate = useNavigate();
   const [alterOpen, setAlterOpen] = useState(true);
 
+  // Cenník vidí v menu len admin; Early Access je zatiaľ len pre prihlásených
+  // (rozdávame ho po ľuďoch, verejnosť oň zatiaľ nemá vedieť).
+  const visibleAlterItems = alterItems.filter((item) => {
+    if (item.to === "/pricing") return isAdmin === true;
+    if (item.to === "/early-access") return Boolean(session);
+    return true;
+  });
+
   const handleLogout = async () => {
     await signOut();
     toast.success(t("dashboard.logoutOk"));
@@ -227,7 +237,7 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
 
           {alterOpen && (
             <div className="mt-1 ml-3 space-y-1 border-l border-border/40 pl-3">
-              {alterItems.map((item) => (
+              {visibleAlterItems.map((item) => (
                 <NavItem key={item.to} item={item} small onNavigate={onNavigate} />
               ))}
             </div>

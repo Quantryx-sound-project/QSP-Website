@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Download, ImageIcon, ChevronDown, Zap } from "lucide-react";
+import { ArrowRight, Download, ImageIcon, ChevronDown, Zap, Rocket, Info } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import {
@@ -16,6 +16,7 @@ import { planById, planNameKey, productBySlug, type PlanId } from "@/lib/product
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useClaimDemo } from "@/hooks/useProfileData";
+import { salesLaunched } from "@/lib/earlyAccess";
 import { toast } from "sonner";
 import ModuleBackground from "@/components/ModuleBackground";
 import bgDemo from "@/assets/backgrounds/hero-demo.webp";
@@ -123,8 +124,8 @@ const ProductDetail = () => {
       <AppLayout>
         <div className="px-6 py-24 text-center">
           <h1 className="text-2xl font-bold mb-4">{t("productPage.notFound")}</h1>
-          <Link to="/pricing" className="text-primary hover:underline">
-            {t("productPage.seePricing")}
+          <Link to="/early-access" className="text-primary hover:underline">
+            {t("productPage.getEarlyAccess")}
           </Link>
         </div>
       </AppLayout>
@@ -177,6 +178,16 @@ const ProductDetail = () => {
     </Button>
   );
 
+  // Predaj plateného Alteru ešte nebeží — namiesto kúpy posielame na Early Access.
+  const notLive = !salesLaunched;
+  const earlyAccessCta = (
+    <Button size="lg" variant="cyber" onClick={() => navigate("/early-access")}>
+      <Rocket className="mr-2 h-4 w-4" />
+      {t("productPage.getEarlyAccess")}
+      <ArrowRight className="ml-2 h-4 w-4" />
+    </Button>
+  );
+
   const planModules = alterModules.filter((m) => m.availableIn.includes(currentPlanId));
   const analysisModules = planModules.filter((m) => m.category === "analysis");
   const creativeModules = planModules.filter((m) => m.category === "creative");
@@ -220,9 +231,21 @@ const ProductDetail = () => {
           <p className="text-xl text-primary mb-4">{t(`${base}.tagline`)}</p>
           <p className="text-lg text-muted-foreground max-w-3xl mb-8">{t(`${base}.intro`)}</p>
 
+          {notLive && (
+            <div className="mb-8 flex items-start gap-3 rounded-xl border border-neon/30 bg-neon/[0.06] px-4 py-4">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-neon" aria-hidden />
+              <div>
+                <p className="font-semibold text-foreground">{t("productPage.salesNotLiveTitle")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("productPage.salesNotLive")}</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-3 mb-14">
             {isDemo ? (
               demoCta
+            ) : notLive ? (
+              earlyAccessCta
             ) : (
               <Button
                 size="lg"
@@ -233,11 +256,13 @@ const ProductDetail = () => {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
-            <Link to="/pricing">
-              <Button size="lg" variant="cyber-outline">
-                {t("productPage.allOptions")}
-              </Button>
-            </Link>
+            {!notLive && (
+              <Link to="/pricing">
+                <Button size="lg" variant="cyber-outline">
+                  {t("productPage.allOptions")}
+                </Button>
+              </Link>
+            )}
           </div>
 
           {isDemo && (
@@ -355,6 +380,8 @@ const ProductDetail = () => {
                 </div>
                 {isDemo ? (
                   demoCta
+                ) : notLive ? (
+                  earlyAccessCta
                 ) : (
                   <Button
                     size="lg"
