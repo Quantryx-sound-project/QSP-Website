@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, type LucideIcon } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,8 @@ import embCreator from "@/assets/emblems/emblem-creator.webp";
 import embPro from "@/assets/emblems/emblem-pro.webp";
 import embAlter from "@/assets/emblems/emblem-alter.webp";
 import embAlter3D from "@/assets/emblems/emblem-alter-3d.webp";
+import embMain from "@/assets/emblems/emblem-main.webp";
+import embPortfolio from "@/assets/emblems/emblem-portfolio.webp";
 
 import ulAccount from "@/assets/backgrounds/underlay-account.webp"; // red — matches account emblem
 import ulPricing from "@/assets/backgrounds/underlay-pricing.webp"; // orange — matches pricing emblem
@@ -28,8 +30,10 @@ import ulListener from "@/assets/backgrounds/hero-listener.webp";
 import ulPro from "@/assets/backgrounds/hero-pro.webp";
 import ulDemo from "@/assets/backgrounds/hero-demo.webp"; // mandala
 import ulCreator from "@/assets/backgrounds/underlay-creator.webp"; // spiro tunnel — creator hover bg (separate from hero)
-import ulAlter from "@/assets/backgrounds/underlay-alter.webp"; // crystals — Alter toggle hover bg
-import ulEarlyAccess from "@/assets/backgrounds/underlay-earlyaccess.webp"; // quantum well — Early Access bg
+import ulAlter from "@/assets/backgrounds/underlay-alter.webp"; // magenta mandala — Alter toggle hover bg
+import ulEarlyAccess from "@/assets/backgrounds/underlay-earlyaccess.webp"; // cosmic spiral — Early Access bg
+import ulMain from "@/assets/backgrounds/underlay-main.webp"; // crystals — Main page bg
+import ulPortfolio from "@/assets/backgrounds/underlay-portfolio.webp"; // quantum well — Portfolio bg
 
 type Item = {
   to: string;
@@ -42,9 +46,9 @@ type Item = {
 };
 
 export const navItems: Item[] = [
-  { to: "/", label: "Main page", icon: Home },
+  { to: "/", label: "Main page", emblem: embMain, underlay: ulMain },
   { to: "/dashboard", labelKey: "nav.account", emblem: embAccount, underlay: ulAccount },
-  { to: "/portfolio", label: "Portfolio", icon: FolderOpen },
+  { to: "/portfolio", label: "Portfolio", emblem: embPortfolio, underlay: ulPortfolio },
   { to: "/about", labelKey: "nav.aboutFull", emblem: embAbout, underlay: ulAbout },
 ];
 
