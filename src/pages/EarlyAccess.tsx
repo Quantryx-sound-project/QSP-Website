@@ -37,9 +37,9 @@ const EarlyAccess = () => {
     script.setAttribute("data-cfasync", "false");
     script.src = "https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js";
     script.setAttribute("data-id", bmcUsername);
-    script.setAttribute("data-description", "Support me on Buy me a coffee!");
+    script.setAttribute("data-description", "Support Quantryx");
     script.setAttribute("data-message", "love you and thank you for the support!💖");
-    script.setAttribute("data-color", "#5F7FFF");
+    script.setAttribute("data-color", "#6B7280");
     script.setAttribute("data-position", "Right");
     script.setAttribute("data-x_margin", "18");
     script.setAttribute("data-y_margin", "18");
@@ -97,18 +97,18 @@ const EarlyAccess = () => {
           </h2>
           <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
             Thank you for supporting the project. I build this on my own as an indie developer, and
-            every single interaction means the world to me. Thank you for being here with me. If
-            you'd like to fuel my creativity with a tip for a coffee, you can do so right here on
+            every single interaction means the world to me. If you'd like to fuel my
+            creativity with a tip for a coffee, you can do so right here on
             this page. Every little bit helps. And if you don't, that's completely fine, the download
             is free either way. 💜
           </p>
           <p className="mt-3 max-w-2xl font-medium text-primary">
-            Thank you for being here. — Quantryx
+            Thank you for being here with me
           </p>
           <div className="mt-6">
             <Button size="lg" variant="cyber" onClick={openSupport}>
               <Coffee className="mr-2 h-4 w-4" />
-              Support Quantryx
+              Buy me a coffee
             </Button>
           </div>
         </section>
