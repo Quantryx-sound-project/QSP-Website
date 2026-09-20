@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, Rocket, type LucideIcon } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, Home, FolderOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,7 @@ import embDemo from "@/assets/emblems/emblem-demo.webp";
 import embCreator from "@/assets/emblems/emblem-creator.webp";
 import embPro from "@/assets/emblems/emblem-pro.webp";
 import embAlter from "@/assets/emblems/emblem-alter.webp";
+import embAlter3D from "@/assets/emblems/emblem-alter-3d.webp";
 
 import ulAccount from "@/assets/backgrounds/underlay-account.webp"; // red — matches account emblem
 import ulPricing from "@/assets/backgrounds/underlay-pricing.webp"; // orange — matches pricing emblem
@@ -27,6 +28,8 @@ import ulListener from "@/assets/backgrounds/hero-listener.webp";
 import ulPro from "@/assets/backgrounds/hero-pro.webp";
 import ulDemo from "@/assets/backgrounds/hero-demo.webp"; // mandala
 import ulCreator from "@/assets/backgrounds/underlay-creator.webp"; // spiro tunnel — creator hover bg (separate from hero)
+import ulAlter from "@/assets/backgrounds/underlay-alter.webp"; // crystals — Alter toggle hover bg
+import ulEarlyAccess from "@/assets/backgrounds/underlay-earlyaccess.webp"; // quantum well — Early Access bg
 
 type Item = {
   to: string;
@@ -49,7 +52,7 @@ export const navItems: Item[] = [
 // lebo to je najcastejsia otazka pred stiahnutim.
 const alterItems: Item[] = [
   // Early Access je teraz hlavný vstup k Alteru (predaj ešte nebeží).
-  { to: "/early-access", label: "Early Access", icon: Rocket },
+  { to: "/early-access", label: "Early Access", emblem: embAlter, underlay: ulEarlyAccess },
   { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
@@ -221,18 +224,25 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
           <button
             type="button"
             onClick={() => setAlterOpen((open) => !open)}
-            className="group flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors"
+            className="group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors"
           >
-            <span className="flex items-center gap-3">
+            {/* Pozadie ako pri ostatných položkách — objaví sa na hover cez screen blend. */}
+            <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+              <span
+                className="absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-300 [mix-blend-mode:screen] group-hover:opacity-45 group-hover:[filter:brightness(1.3)_contrast(1.05)]"
+                style={{ backgroundImage: `url(${ulAlter})` }}
+              />
+            </span>
+            <span className="relative z-10 flex items-center gap-3">
               <img
-                src={embAlter}
+                src={embAlter3D}
                 alt=""
                 aria-hidden
                 className="h-5 w-5 shrink-0 object-contain opacity-70 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
               />
               {t("nav.alter")}
             </span>
-            <ChevronDown className={cn("h-4 w-4 transition-transform", alterOpen && "rotate-180")} />
+            <ChevronDown className={cn("relative z-10 h-4 w-4 transition-transform", alterOpen && "rotate-180")} />
           </button>
 
           {alterOpen && (
