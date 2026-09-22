@@ -15,9 +15,7 @@ import {
 import { planById, planNameKey, productBySlug, type PlanId } from "@/lib/products";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
-import { useClaimDemo } from "@/hooks/useProfileData";
 import { salesLaunched } from "@/lib/earlyAccess";
-import { toast } from "sonner";
 import ModuleBackground from "@/components/ModuleBackground";
 import bgDemo from "@/assets/backgrounds/hero-demo.webp";
 import bgListener from "@/assets/backgrounds/hero-listener.webp";
@@ -116,7 +114,6 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { t } = useT();
   const { session } = useAuth();
-  const claimDemo = useClaimDemo();
   const product = slug ? productBySlug[slug] : undefined;
 
   if (!product) {
@@ -139,38 +136,20 @@ const ProductDetail = () => {
   const name = t(planNameKey(primaryPlanId));
   const price = plan?.price ?? "";
   const base = `products.${product.slug}`;
-  // Demo je zadarmo – priame stiahnutie. Zatiaľ nemáme reálnu inštalačku,
-  // takže sťahujeme zástupný súbor z /public/downloads.
-  const demoDownloadPath = "/downloads/alter-demo-placeholder.png";
   const buyLabel = t("productPage.buyFor").replace("{price}", price);
   const isAuthed = Boolean(session);
 
-  // Prihlásený používateľ: zapíšeme demo licenciu (aby sa objavila v „Licenciách")
-  // a spustíme stiahnutie. Neprihlásený: pošleme ho na login.
-  const handleDemoDownload = async () => {
-    try {
-      await claimDemo.mutateAsync();
-    } catch {
-      /* aj keď zápis licencie zlyhá, stiahnutie povolíme */
-    }
-    const a = document.createElement("a");
-    a.href = demoDownloadPath;
-    a.download = "";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    toast.success(t("productPage.downloadStarted"));
-  };
-
+  // Demo prechádza rovnakou platobnou bránou (Lemon Squeezy, dobrovoľný
+  // príspevok od 0 €). Po dokončení objednávky sa licencia aj stiahnutie
+  // objaví v profile → Moje licencie. Prihlásený → checkout, inak → login.
   const demoCta = isAuthed ? (
     <Button
       size="lg"
       variant="cyber"
-      onClick={handleDemoDownload}
-      disabled={claimDemo.isPending}
+      onClick={() => navigate(`/checkout?plan=${primaryPlanId}`)}
     >
       <Download className="mr-2 h-4 w-4" />
-      {t("dashboard.download")}
+      {t("productPage.getDemo")}
     </Button>
   ) : (
     <Button size="lg" variant="cyber" onClick={() => navigate("/login")}>

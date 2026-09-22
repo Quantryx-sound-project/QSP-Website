@@ -35,6 +35,12 @@ const VARIANT_TO_PLAN: Record<string, "demo" | "listener" | "creator" | "pro"> =
 const addVariant = (id: string | undefined, plan: "demo" | "listener" | "creator" | "pro") => {
   if (id) VARIANT_TO_PLAN[id] = plan;
 };
+// Známe variant ID (test mode) — natvrdo, aby mapovanie fungovalo aj bez secrets.
+addVariant("2155356", "demo");
+addVariant("2155812", "listener");
+addVariant("2155819", "creator");
+addVariant("2155829", "pro");
+// Voliteľné prepísanie cez secrets (napr. pri prechode na Live s inými ID):
 addVariant(Deno.env.get("LS_VARIANT_DEMO"), "demo");
 addVariant(Deno.env.get("LS_VARIANT_LISTENER"), "listener");
 addVariant(Deno.env.get("LS_VARIANT_CREATOR"), "creator");

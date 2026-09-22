@@ -166,9 +166,10 @@ export const translations = {
     },
     productPage: {
       buyFor: "Buy for {price}",
+      getDemo: "Get the demo",
       downloadDemoTitle: "Download the Alter demo",
       downloadDemoText: "Free preview build for Windows & macOS — no account needed.",
-      installerSoon: "Installer coming soon — for now this downloads a placeholder.",
+      installerSoon: "Free — complete checkout, then download from your profile → My licenses.",
       downloadStarted: "Download started — Demo added to your licenses.",
       demoNeedsLogin: "Sign in to download the demo — it'll appear in your licenses.",
       signInToDownload: "Sign in to download",
@@ -609,9 +610,10 @@ export const translations = {
     },
     productPage: {
       buyFor: "Kúpiť za {price}",
+      getDemo: "Získať demo",
       downloadDemoTitle: "Stiahni Alter demo",
       downloadDemoText: "Bezplatná ukážková verzia pre Windows a macOS — bez účtu.",
-      installerSoon: "Inštalačka čoskoro — zatiaľ sa stiahne zástupný súbor.",
+      installerSoon: "Zadarmo — dokonči objednávku a stiahni z profilu → Moje licencie.",
       downloadStarted: "Sťahovanie sa spustilo — Demo pridané do tvojich licencií.",
       demoNeedsLogin: "Na stiahnutie dema sa prihlás — objaví sa v tvojich licenciách.",
       signInToDownload: "Prihlásiť sa na stiahnutie",
