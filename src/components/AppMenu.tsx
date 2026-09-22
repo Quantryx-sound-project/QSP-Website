@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useInWaitlist } from "@/hooks/useInWaitlist";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -56,7 +57,7 @@ export const navItems: Item[] = [
 // lebo to je najcastejsia otazka pred stiahnutim.
 const alterItems: Item[] = [
   // Early Access je teraz hlavný vstup k Alteru (predaj ešte nebeží).
-  { to: "/early-access", label: "Early Access", emblem: embAlter, underlay: ulEarlyAccess },
+  { to: "/early-access", label: "What is Alter", emblem: embAlter, underlay: ulEarlyAccess },
   { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
@@ -192,15 +193,20 @@ const AdminNavItem = ({ onNavigate }: { onNavigate?: () => void }) => (
 const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; compact?: boolean }) => {
   const { session, signOut } = useAuth();
   const isAdmin = useIsAdmin();
+  const inWaitlist = useInWaitlist();
   const { t } = useT();
   const navigate = useNavigate();
   const [alterOpen, setAlterOpen] = useState(true);
 
   // Cenník vidí v menu len admin; Early Access je zatiaľ len pre prihlásených
   // (rozdávame ho po ľuďoch, verejnosť oň zatiaľ nemá vedieť).
+  // "What is Alter" je verejné; Pricing a karty tierov len pre prihláseného
+  // vo waitliste (alebo admina).
+  const eligible = isAdmin === true || inWaitlist === true;
   const visibleAlterItems = alterItems.filter((item) => {
-    if (item.to === "/pricing") return isAdmin === true;
-    if (item.to === "/early-access") return Boolean(session);
+    if (item.to === "/early-access") return true;
+    if (item.to === "/pricing") return eligible;
+    if (item.to.startsWith("/product/")) return eligible;
     return true;
   });
 

@@ -27,7 +27,7 @@ export const earlyAccessVersion = "0.0.1 — Early Access";
 // Predaj plateného Alteru (demo/listener/creator/pro cez Lemon Squeezy) ešte NEbeží.
 // Keď spustíš ostrý predaj, prepni na true — poznámky "predaj ešte nie je spustený"
 // na produktových stránkach sa automaticky skryjú.
-export const salesLaunched = false;
+export const salesLaunched = true;
 
 export const hasInstaller = (): boolean => installerUrl.trim().length > 0;
 export const hasDonation = (): boolean => donationUrl.trim().length > 0;

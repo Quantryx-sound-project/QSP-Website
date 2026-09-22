@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { I18nProvider } from "@/lib/i18n";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminRoute from "@/components/AdminRoute";
+import WaitlistRoute from "@/components/WaitlistRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Quantryx from "./pages/Quantryx";
@@ -40,19 +40,12 @@ const App = () => (
             <Route
               path="/pricing"
               element={
-                <AdminRoute>
+                <WaitlistRoute>
                   <Pricing />
-                </AdminRoute>
+                </WaitlistRoute>
               }
             />
-            <Route
-              path="/early-access"
-              element={
-                <ProtectedRoute>
-                  <EarlyAccess />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/early-access" element={<EarlyAccess />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/portfolio" element={<Portfolio />} />

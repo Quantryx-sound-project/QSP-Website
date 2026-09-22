@@ -12,14 +12,13 @@ import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
 import ModuleBackground from "@/components/ModuleBackground";
 import WaitlistSection from "@/components/WaitlistSection";
+import SupportSection from "@/components/SupportSection";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
-import { useAuth } from "@/hooks/useAuth";
 
 const Quantryx = () => {
   const { t } = useT();
-  const { session } = useAuth();
   const { open: menuOpen, setOpen: setMenuOpen, width, startResize } = useSidebar(true);
 
   // Aplikácie a pluginy zobrazené na homepage. Ďalšie doplníš pridaním položky.
@@ -108,14 +107,12 @@ const Quantryx = () => {
           </blockquote>
           <p className="text-base text-muted-foreground mb-10">{t("landing.heroSubtitle")}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {session && (
-              <Link to="/early-access" onClick={() => trackClick("hero_early_access")}>
-                <Button size="lg">
-                  Get Early Access
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            )}
+            <Link to="/early-access" onClick={() => trackClick("hero_what_is_alter")}>
+              <Button size="lg">
+                What is Alter
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
             <Link to="/about" onClick={() => trackClick("hero_about")}>
               <Button size="lg" variant="outline">
                 {t("landing.aboutCta")}
@@ -129,6 +126,8 @@ const Quantryx = () => {
           </div>
         </div>
       </section>
+
+      <SupportSection />
 
       <section className="pb-24 px-6">
         <div className="container mx-auto">
