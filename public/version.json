@@ -4,10 +4,10 @@
   "released": "2026-09-23",
   "mandatory": false,
   "min_supported": "0.0.0",
-  "notes": "Early Access build — prihlasovanie (login) a tier limitacie.",
+  "notes": "Early Access build — login (Google / email link / heslo) a tier limitacie.",
   "windows": {
     "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.1/Alter-0.0.1-Windows.exe",
-    "sha256": "1dc05475b3e268be5b42b00bd518becbae481cd88a48466b3ad4cfbcfa05e547"
+    "sha256": "b66f95b2b5307d58ee6db304c77c1305b72ef6829704803998045b9982294142"
   },
   "macos": {
     "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.1/Alter-0.0.1-macOS.pkg",
