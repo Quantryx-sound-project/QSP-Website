@@ -264,7 +264,7 @@ const Dashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <Button onClick={() => navigate("/early-access")}>
+                    <Button onClick={() => navigate("/pricing")}>
                       {t("account.membershipCta")}
                     </Button>
                   </div>
@@ -400,7 +400,7 @@ const Dashboard = () => {
               </Card>
 
               {/* 3. Zakúpené licencie */}
-              <Card>
+              <Card id="licenses">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <KeyRound className="h-5 w-5 text-primary" />
@@ -412,7 +412,7 @@ const Dashboard = () => {
                   {licenses.length === 0 ? (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <p className="text-muted-foreground">{t("account.licensesEmpty")}</p>
-                      <Button variant="outline" onClick={() => navigate("/early-access")}>
+                      <Button variant="outline" onClick={() => navigate("/pricing")}>
                         {t("account.browse")}
                       </Button>
                     </div>

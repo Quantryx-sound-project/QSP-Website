@@ -39,6 +39,7 @@ addVariant(Deno.env.get("LS_VARIANT_DEMO"), "demo");
 addVariant(Deno.env.get("LS_VARIANT_LISTENER"), "listener");
 addVariant(Deno.env.get("LS_VARIANT_CREATOR"), "creator");
 addVariant(Deno.env.get("LS_VARIANT_PRO"), "pro");
+console.log("[lemon-webhook] VARIANT_TO_PLAN =", JSON.stringify(VARIANT_TO_PLAN));
 
 const PLAN_NAME: Record<string, string> = {
   demo: "Alter Demo",
@@ -123,6 +124,7 @@ Deno.serve(async (req) => {
         const firstItem = attr.first_order_item ?? {};
         const variantId = firstItem.variant_id;
         const plan = planFromVariant(variantId) ?? "demo";
+        console.log("[lemon-webhook] order_created variant_id=", String(variantId), "plan=", plan, "subscription_id=", String(attr.subscription_id));
         const productName = firstItem.product_name ?? PLAN_NAME[plan];
 
         // 1) objednávka do histórie
@@ -182,6 +184,7 @@ Deno.serve(async (req) => {
         const subId = String(payload.data.id);
         const variantId = attr.variant_id;
         const plan = planFromVariant(variantId) ?? "demo";
+        console.log("[lemon-webhook] subscription variant_id=", String(variantId), "plan=", plan);
         const productName = attr.product_name ?? PLAN_NAME[plan];
 
         const statusMap: Record<string, string> = {

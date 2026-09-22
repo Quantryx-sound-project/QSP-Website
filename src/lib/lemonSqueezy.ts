@@ -14,8 +14,27 @@ export const lemonCheckoutUrls: Record<string, string> = {
 };
 
 type LemonWindow = Window & {
-  LemonSqueezy?: { Url?: { Open?: (url: string) => void } };
+  LemonSqueezy?: {
+    Url?: { Open?: (url: string) => void };
+    Setup?: (opts: { eventHandler: (e: { event?: string }) => void }) => void;
+  };
 };
+
+// Po úspešnej platbe (overlay) presmeruj používateľa rovno k jeho licencii
+// (Dashboard → sekcia licencií). Nastaví sa raz.
+let successHandlerReady = false;
+function ensureSuccessRedirect() {
+  const w = window as LemonWindow;
+  if (successHandlerReady || !w.LemonSqueezy?.Setup) return;
+  successHandlerReady = true;
+  w.LemonSqueezy.Setup({
+    eventHandler: (e) => {
+      if (e?.event === "Checkout.Success") {
+        window.location.href = "/dashboard#licenses";
+      }
+    },
+  });
+}
 
 export function isLemonConfigured(planId: string): boolean {
   return Boolean(lemonCheckoutUrls[planId]);
@@ -40,6 +59,7 @@ export function openLemonCheckout(
   if (opts.userId) url.searchParams.set("checkout[custom][user_id]", opts.userId);
 
   const w = window as LemonWindow;
+  ensureSuccessRedirect();
   const open = w.LemonSqueezy?.Url?.Open;
   if (typeof open === "function") {
     open(url.toString());
