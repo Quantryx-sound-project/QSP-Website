@@ -112,13 +112,29 @@ Deno.serve(async (req) => {
 
   const eventName: string = payload?.meta?.event_name ?? "";
   const custom = payload?.meta?.custom_data ?? {};
-  const userId: string | undefined = custom.user_id ?? custom.userId;
   const attr = payload?.data?.attributes ?? {};
+  let userId: string | undefined = custom.user_id ?? custom.userId;
+  const buyerEmail: string | undefined = attr.user_email ?? custom.email;
 
-  // user_id posielame v checkout[custom][user_id]; bez neho nevieme priradiť
+  // Fallback: ak z checkoutu neprišlo user_id (napr. hosted checkout alebo
+  // nezachytené custom data), napárujeme kupujúceho podľa emailu na profiles.
+  if (!userId && buyerEmail) {
+    const { data: prof, error: profErr } = await admin
+      .from("profiles")
+      .select("id")
+      .ilike("email", buyerEmail)
+      .maybeSingle();
+    if (profErr) console.warn("[lemon-webhook] profiles lookup error:", profErr.message);
+    if (prof?.id) {
+      userId = prof.id as string;
+      console.log("[lemon-webhook] user_id doplnené podľa emailu:", buyerEmail);
+    }
+  }
+
+  // bez user_id ani emailovej zhody nevieme licenciu priradiť
   if (!userId) {
-    console.warn(`[lemon-webhook] ${eventName}: chýba custom user_id, preskakujem`);
-    return new Response("ok (no user_id)", { status: 200 });
+    console.warn(`[lemon-webhook] ${eventName}: žiadne user_id ani email match (email=${buyerEmail ?? "?"}), preskakujem`);
+    return new Response("ok (no user match)", { status: 200 });
   }
 
   try {
