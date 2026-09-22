@@ -31,10 +31,11 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_SECRET = Deno.env.get("LEMON_WEBHOOK_SECRET") ?? "";
 
 // variant ID (Lemon Squeezy) → náš plán
-const VARIANT_TO_PLAN: Record<string, "listener" | "creator" | "pro"> = {};
-const addVariant = (id: string | undefined, plan: "listener" | "creator" | "pro") => {
+const VARIANT_TO_PLAN: Record<string, "demo" | "listener" | "creator" | "pro"> = {};
+const addVariant = (id: string | undefined, plan: "demo" | "listener" | "creator" | "pro") => {
   if (id) VARIANT_TO_PLAN[id] = plan;
 };
+addVariant(Deno.env.get("LS_VARIANT_DEMO"), "demo");
 addVariant(Deno.env.get("LS_VARIANT_LISTENER"), "listener");
 addVariant(Deno.env.get("LS_VARIANT_CREATOR"), "creator");
 addVariant(Deno.env.get("LS_VARIANT_PRO"), "pro");
@@ -78,7 +79,7 @@ function makeLicenseKey(): string {
   return `ALTR-${block()}-${block()}-${block()}`;
 }
 
-function planFromVariant(variantId: unknown): "listener" | "creator" | "pro" | null {
+function planFromVariant(variantId: unknown): "demo" | "listener" | "creator" | "pro" | null {
   const id = variantId == null ? "" : String(variantId);
   return VARIANT_TO_PLAN[id] ?? null;
 }
@@ -121,7 +122,7 @@ Deno.serve(async (req) => {
         const currency = attr.currency ?? "EUR";
         const firstItem = attr.first_order_item ?? {};
         const variantId = firstItem.variant_id;
-        const plan = planFromVariant(variantId) ?? "listener";
+        const plan = planFromVariant(variantId) ?? "demo";
         const productName = firstItem.product_name ?? PLAN_NAME[plan];
 
         // 1) objednávka do histórie
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
       case "subscription_updated": {
         const subId = String(payload.data.id);
         const variantId = attr.variant_id;
-        const plan = planFromVariant(variantId) ?? "creator";
+        const plan = planFromVariant(variantId) ?? "demo";
         const productName = attr.product_name ?? PLAN_NAME[plan];
 
         const statusMap: Record<string, string> = {

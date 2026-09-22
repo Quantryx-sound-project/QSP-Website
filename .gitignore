@@ -44,3 +44,6 @@ src/assets/portfolio/product designs/
 
 # Vite docasne config subory (generuju sa automaticky)
 vite.config.ts.timestamp-*.mjs
+
+# session backups
+*.bak-pred-login
