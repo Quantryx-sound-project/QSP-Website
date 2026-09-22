@@ -91,6 +91,34 @@ function planFromVariant(variantId: unknown): "demo" | "listener" | "creator" | 
   return VARIANT_TO_PLAN[id] ?? null;
 }
 
+// Zápis bez PostgREST onConflict: naše unique indexy sú PARTIAL
+// (WHERE ls_order_id IS NOT NULL), a tie PostgREST .upsert(onConflict) NEakceptuje
+// (chyba 42P10) → predtým zlyhával ticho. Nájdeme riadok podľa kľúča a UPDATE/INSERT,
+// pričom chybu vyhodíme (outer catch vráti 500 → v LS uvidíš neúspešné doručenie).
+async function upsertBy(
+  table: string,
+  keyCol: string,
+  keyVal: string,
+  row: Record<string, unknown>,
+  insertOnly: Record<string, unknown> = {},
+) {
+  const { data: existing, error: selErr } = await admin
+    .from(table)
+    .select("id")
+    .eq(keyCol, keyVal)
+    .maybeSingle();
+  if (selErr) throw new Error(`${table} select(${keyCol}=${keyVal}): ${selErr.message}`);
+  if (existing?.id) {
+    const { error } = await admin.from(table).update(row).eq("id", existing.id);
+    if (error) throw new Error(`${table} update: ${error.message}`);
+    console.log(`[lemon-webhook] ${table} updated (${keyCol}=${keyVal})`);
+  } else {
+    const { error } = await admin.from(table).insert({ ...row, ...insertOnly });
+    if (error) throw new Error(`${table} insert: ${error.message}`);
+    console.log(`[lemon-webhook] ${table} inserted (${keyCol}=${keyVal})`);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -150,36 +178,33 @@ Deno.serve(async (req) => {
         const productName = firstItem.product_name ?? PLAN_NAME[plan];
 
         // 1) objednávka do histórie
-        await admin.from("orders").upsert(
-          {
-            user_id: userId,
-            plan,
-            product_name: productName,
-            total,
-            currency,
-            status: attr.refunded ? "refunded" : "paid",
-            invoice_url: attr.urls?.receipt ?? null,
-            card_brand: attr.card_brand ?? null,
-            card_last_four: attr.card_last_four ?? null,
-            ls_order_id: orderId,
-            order_number: attr.order_number ? String(attr.order_number) : null,
-            ordered_at: attr.created_at ?? new Date().toISOString(),
-          },
-          { onConflict: "ls_order_id" },
-        );
+        await upsertBy("orders", "ls_order_id", orderId, {
+          user_id: userId,
+          plan,
+          product_name: productName,
+          total,
+          currency,
+          status: attr.refunded ? "refunded" : "paid",
+          invoice_url: attr.urls?.receipt ?? null,
+          card_brand: attr.card_brand ?? null,
+          card_last_four: attr.card_last_four ?? null,
+          ls_order_id: orderId,
+          order_number: attr.order_number ? String(attr.order_number) : null,
+          ordered_at: attr.created_at ?? new Date().toISOString(),
+        });
 
         // 2) jednorazová licencia (subscription rieši subscription_created)
         if (attr.subscription_id == null) {
-          await admin.from("licenses").upsert(
+          await upsertBy(
+            "licenses",
+            "ls_order_id",
+            orderId,
             {
               user_id: userId,
               plan,
               product_name: productName,
               status: "active",
               period_type: "oneTime",
-              license_key: makeLicenseKey(),
-              activations_used: 0,
-              activations_limit: 3,
               price_paid: total,
               currency,
               card_brand: attr.card_brand ?? null,
@@ -188,7 +213,12 @@ Deno.serve(async (req) => {
               ls_variant_id: variantId ? String(variantId) : null,
               purchased_at: attr.created_at ?? new Date().toISOString(),
             },
-            { onConflict: "ls_order_id" },
+            // len pri vytvorení – aby resend neprepísal kľúč / počet aktivácií
+            {
+              license_key: makeLicenseKey(),
+              activations_used: 0,
+              activations_limit: 3,
+            },
           );
         }
         break;
@@ -220,15 +250,16 @@ Deno.serve(async (req) => {
         };
         const status = statusMap[attr.status] ?? "active";
 
-        await admin.from("licenses").upsert(
+        await upsertBy(
+          "licenses",
+          "ls_subscription_id",
+          subId,
           {
             user_id: userId,
             plan,
             product_name: productName,
             status,
             period_type: "subscription",
-            license_key: eventName === "subscription_created" ? makeLicenseKey() : undefined,
-            price_paid: undefined,
             currency: "EUR",
             renews_at: attr.renews_at ?? null,
             ends_at: attr.ends_at ?? null,
@@ -238,7 +269,9 @@ Deno.serve(async (req) => {
             ls_subscription_id: subId,
             ls_variant_id: variantId ? String(variantId) : null,
           },
-          { onConflict: "ls_subscription_id" },
+          eventName === "subscription_created"
+            ? { license_key: makeLicenseKey(), activations_used: 0, activations_limit: 3 }
+            : {},
         );
         break;
       }
