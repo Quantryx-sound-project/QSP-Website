@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Download } from "lucide-react";
+import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import AppLayout from "@/components/AppLayout";
 import ModuleBackground from "@/components/ModuleBackground";
 import bgHero from "@/assets/backgrounds/hero-pricing.webp";
 import { plans, planNameKey, planFeaturesKey, Plan } from "@/lib/products";
-import { installerUrl, installerUrlMac } from "@/lib/earlyAccess";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,14 +17,6 @@ const Pricing = () => {
   const { session } = useAuth();
 
   const buy = (planId: string) => navigate(`/checkout?plan=${planId}`);
-  const startDownload = (url: string) => {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
   const periodLabel = (p: Plan) => {
     if (p.periodType === "free") return t("plans.free");
     return t("plans.oneTime");
@@ -161,24 +152,6 @@ const Pricing = () => {
               : t("common.signInToDownload")
             : t("common.buy")}
         </Button>
-
-        <div className="mt-3 space-y-2">
-          <Button
-            variant="cyber-outline"
-            className="w-full"
-            onClick={() => startDownload(installerUrl)}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download for Windows
-          </Button>
-          <button
-            type="button"
-            onClick={() => startDownload(installerUrlMac)}
-            className="w-full text-xs text-muted-foreground hover:text-foreground"
-          >
-            Download for macOS
-          </button>
-        </div>
       </CardContent>
     </Card>
   );

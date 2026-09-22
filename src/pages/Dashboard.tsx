@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
 import { useT } from "@/lib/i18n";
 import { formatEur } from "@/lib/pricing";
+import { installerUrl, installerUrlMac } from "@/lib/earlyAccess";
 import { supabaseConfigured } from "@/integrations/supabase/client";
 import {
   useProfile,
@@ -108,10 +109,20 @@ const Dashboard = () => {
     });
   };
 
-  const handleDownload = (platform: string) =>
-    toast.success(t("dashboard.downloadToast").replace("{platform}", platform), {
+  // Reálne stiahnutie inštalačky. Prístup má každý s aktívnou licenciou
+  // (prešiel platobnou bránou) — appka aj tak dá tier podľa prihlásenia.
+  const handleDownload = (platform: "windows" | "macos") => {
+    const url = platform === "windows" ? installerUrl : installerUrlMac;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success(t("dashboard.downloadToast").replace("{platform}", platform === "windows" ? "Windows" : "macOS"), {
       description: t("dashboard.downloadToastDesc"),
     });
+  };
 
   const statusMeta = (status: License["status"]) => {
     switch (status) {
@@ -469,12 +480,12 @@ const Dashboard = () => {
                               </span>
                             </div>
 
-                            {isActive && lic.plan !== "demo" && (
+                            {isActive && (
                               <div className="flex flex-wrap gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDownload("Windows")}
+                                  onClick={() => handleDownload("windows")}
                                 >
                                   <Monitor className="mr-2 h-4 w-4" />
                                   Windows
@@ -482,7 +493,7 @@ const Dashboard = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDownload("macOS")}
+                                  onClick={() => handleDownload("macos")}
                                 >
                                   <Apple className="mr-2 h-4 w-4" />
                                   macOS
