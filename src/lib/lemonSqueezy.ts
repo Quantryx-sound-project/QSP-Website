@@ -18,6 +18,7 @@ type LemonWindow = Window & {
     Url?: { Open?: (url: string) => void };
     Setup?: (opts: { eventHandler: (e: { event?: string }) => void }) => void;
   };
+  createLemonSqueezy?: () => void;
 };
 
 // Po úspešnej platbe (overlay) presmeruj používateľa rovno k jeho licencii
@@ -25,12 +26,13 @@ type LemonWindow = Window & {
 let successHandlerReady = false;
 function ensureSuccessRedirect() {
   const w = window as LemonWindow;
+  if (!w.LemonSqueezy && typeof w.createLemonSqueezy === "function") w.createLemonSqueezy();
   if (successHandlerReady || !w.LemonSqueezy?.Setup) return;
   successHandlerReady = true;
   w.LemonSqueezy.Setup({
     eventHandler: (e) => {
       if (e?.event === "Checkout.Success") {
-        window.location.href = "/dashboard#licenses";
+        window.location.href = "/dashboard?checkout=success#licenses";
       }
     },
   });
@@ -60,6 +62,17 @@ export function openLemonCheckout(
 
   const w = window as LemonWindow;
   ensureSuccessRedirect();
+  // Ak sa checkout otvorí v novej karte (bez overlay), po návrate na túto kartu
+  // pošleme používateľa do profilu, kde sa licencia automaticky dorovná.
+  if (typeof w.LemonSqueezy?.Url?.Open !== "function") {
+    const onReturn = () => {
+      if (document.visibilityState === "visible") {
+        document.removeEventListener("visibilitychange", onReturn);
+        window.location.href = "/dashboard?checkout=success#licenses";
+      }
+    };
+    setTimeout(() => document.addEventListener("visibilitychange", onReturn), 1500);
+  }
   const open = w.LemonSqueezy?.Url?.Open;
   if (typeof open === "function") {
     open(url.toString());

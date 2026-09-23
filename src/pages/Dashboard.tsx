@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +26,7 @@ import {
   Loader2,
   Pencil,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
@@ -38,6 +38,7 @@ import {
   useProfile,
   useLicenses,
   useOrders,
+  useSyncLicenses,
   useUpdateProfile,
   describeSupabaseError,
   type License,
@@ -49,8 +50,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const profileQ = useProfile();
-  const licensesQ = useLicenses();
+  // ---- návrat z platobnej brány: licenciu čakáme (webhook príde o pár sekúnd) ----
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [awaitingPayment, setAwaitingPayment] = useState(
+    () => searchParams.get("checkout") === "success"
+  );
+  const [paymentSlow, setPaymentSlow] = useState(false);
+  const licensesQ = useLicenses({ pollMs: awaitingPayment ? 3000 : false });
   const ordersQ = useOrders();
+  const syncLicenses = useSyncLicenses();
+  const initialLicenseIds = useRef<Set<string> | null>(null);
   const updateProfile = useUpdateProfile();
 
   const fmtDate = useMemo(
@@ -124,6 +133,9 @@ const Dashboard = () => {
     });
   };
 
+  // Názov licencie vždy podľa skutočného plánu (napr. "Alter Pro").
+  const licenseName = (lic: Pick<License, "plan">) => `Alter ${t(`plans.${lic.plan}Name`)}`;
+
   const statusMeta = (status: License["status"]) => {
     switch (status) {
       case "active":
@@ -160,11 +172,53 @@ const Dashboard = () => {
     .join(" · ");
   const anyError = Boolean(errorDetail);
 
-  // Aktívna platená licencia (nie demo) → zákazník „má" produkt.
-  const activeLicense = licenses.find(
-    (l) => l.plan !== "demo" && (l.status === "active" || l.status === "cancelled")
-  );
+  // Najvyššia aktívna licencia (pro > creator > listener > demo).
+  const TIER_RANK: Record<string, number> = { demo: 0, listener: 1, creator: 2, pro: 3 };
+  const activeLicense = [...licenses]
+    .filter((l) => l.status === "active" || l.status === "cancelled")
+    .sort((a, b) => (TIER_RANK[b.plan] ?? 0) - (TIER_RANK[a.plan] ?? 0))[0];
   const hasLicense = Boolean(activeLicense);
+
+  // Po návrate z checkoutu: hneď dorovnaj cez lemon-sync, potom polluj, kým
+  // nepribudne nová licencia (max ~90 s).
+  useEffect(() => {
+    if (!awaitingPayment || !user) return;
+    syncLicenses.mutate();
+    const again = setTimeout(() => syncLicenses.mutate(), 12000);
+    const slow = setTimeout(() => setPaymentSlow(true), 30000);
+    const stop = setTimeout(() => setAwaitingPayment(false), 90000);
+    return () => {
+      clearTimeout(again);
+      clearTimeout(slow);
+      clearTimeout(stop);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingPayment, user?.id]);
+
+  useEffect(() => {
+    if (!licensesQ.data) return;
+    if (initialLicenseIds.current === null) {
+      // pri návrate z checkoutu berieme ako "nové" licencie kúpené za posledných 30 min
+      const recent = Date.now() - 30 * 60 * 1000;
+      initialLicenseIds.current = new Set(
+        licensesQ.data
+          .filter((l) => !awaitingPayment || new Date(l.purchased_at).getTime() < recent)
+          .map((l) => l.id)
+      );
+    }
+    if (!awaitingPayment) return;
+    const fresh = licensesQ.data.find((l) => !initialLicenseIds.current!.has(l.id));
+    if (fresh) {
+      setAwaitingPayment(false);
+      setPaymentSlow(false);
+      toast.success(t("account.licenseArrived"), { description: licenseName(fresh) });
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      setSearchParams(next, { replace: true });
+      document.getElementById("licenses")?.scrollIntoView({ behavior: "smooth" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [licensesQ.data, awaitingPayment]);
 
   const refetchAll = () => {
     profileQ.refetch();
@@ -243,7 +297,7 @@ const Dashboard = () => {
                         </p>
                         <p className="text-lg font-semibold">
                           {t("account.membershipActiveLead")} ·{" "}
-                          {activeLicense.product_name || t(`plans.${activeLicense.plan}Name`)}
+                          {licenseName(activeLicense)}
                         </p>
                       </div>
                     </div>
@@ -409,6 +463,25 @@ const Dashboard = () => {
                   <CardDescription>{t("account.licensesSubtitle")}</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {awaitingPayment && (
+                    <div className="mb-4 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      {paymentSlow ? t("account.processingSlow") : t("account.processingPayment")}
+                    </div>
+                  )}
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={syncLicenses.isPending}
+                      onClick={() => syncLicenses.mutate()}
+                    >
+                      <RefreshCw
+                        className={`mr-2 h-4 w-4 ${syncLicenses.isPending ? "animate-spin" : ""}`}
+                      />
+                      {t("account.syncLicenses")}
+                    </Button>
+                  </div>
                   {licenses.length === 0 ? (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <p className="text-muted-foreground">{t("account.licensesEmpty")}</p>
@@ -427,7 +500,7 @@ const Dashboard = () => {
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="font-semibold">
-                                    {lic.product_name || t(`plans.${lic.plan}Name`)}
+                                    {licenseName(lic)}
                                   </h3>
                                   <Badge
                                     variant="outline"
@@ -529,7 +602,7 @@ const Dashboard = () => {
                         >
                           <div>
                             <p className="font-medium">
-                              {o.product_name || (o.plan ? t(`plans.${o.plan}Name`) : "—")}
+                              {o.plan ? licenseName({ plan: o.plan as License["plan"] }) : o.product_name || "—"}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {showDate(o.ordered_at)}

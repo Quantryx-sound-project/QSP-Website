@@ -78,12 +78,13 @@ export function useProfile() {
 }
 
 // ---- Licencie -------------------------------------------------------------
-export function useLicenses() {
+export function useLicenses(opts: { pollMs?: number | false } = {}) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["licenses", user?.id],
     enabled: Boolean(user?.id && supabaseConfigured),
     retry: RETRY,
+    refetchInterval: opts.pollMs ?? false,
     queryFn: async (): Promise<License[]> => {
       const { data, error } = await supabase
         .from("licenses")
@@ -96,6 +97,30 @@ export function useLicenses() {
         throw error;
       }
       return data ?? [];
+    },
+  });
+}
+
+// ---- Dorovnanie licencií priamo z Lemon Squeezy (edge funkcia lemon-sync) ----
+// Záchrana pre prípad, že webhook nedorazí. Chyby nehádžeme – len vrátime výsledok.
+export function useSyncLicenses() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("lemon-sync", { method: "POST" });
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn("[lemon-sync]", error.message ?? error);
+        return { ok: false as const };
+      }
+      // eslint-disable-next-line no-console
+      console.log("[lemon-sync]", data);
+      return data as { ok: boolean; synced?: unknown[]; reason?: string };
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["licenses", user?.id] });
+      qc.invalidateQueries({ queryKey: ["orders", user?.id] });
     },
   });
 }

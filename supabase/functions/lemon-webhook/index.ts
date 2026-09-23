@@ -1,64 +1,36 @@
 // ============================================================
 // Lemon Squeezy → Supabase webhook  (Supabase Edge Function, Deno)
 //
-// Po platbe Lemon Squeezy pošle POST na túto funkciu a my z neho
-// zapíšeme reálnu licenciu + objednávku k správnemu užívateľovi.
+// Po platbe Lemon Squeezy pošle POST sem a my zapíšeme objednávku + licenciu
+// (plán podľa variantu: demo / listener / creator / pro) k správnemu užívateľovi.
 //
-// Spracované eventy:
-//   order_created           → nová objednávka + (pri jednorazovom pláne) licencia
-//   order_refunded          → objednávka + licencia označené ako refunded
-//   subscription_created    → licencia typu subscription (renews_at, portal URL)
-//   subscription_updated    → aktualizácia stavu / dátumu obnovy
-//   subscription_cancelled  → status 'cancelled' (beží do konca obdobia)
-//   subscription_expired    → status 'expired'
+// Nasadenie (verify_jwt=false je aj v supabase/config.toml, takže flag netreba):
+//   supabase functions deploy lemon-webhook
 //
-// Nasadenie:
-//   supabase functions deploy lemon-webhook --no-verify-jwt
-// Premenné (Project Settings → Edge Functions → Secrets):
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (Supabase dopĺňa automaticky)
-//   LEMON_WEBHOOK_SECRET     – "Signing secret" z Lemon Squeezy webhooku
-//   LS_VARIANT_LISTENER, LS_VARIANT_CREATOR, LS_VARIANT_PRO
-//                            – variant ID z Lemon Squeezy (na mapovanie na plán)
+// Diagnostika: otvor v prehliadači
+//   https://<projekt>.supabase.co/functions/v1/lemon-webhook
+//   → ukáže, či je nastavený LEMON_WEBHOOK_SECRET a aké varianty pozná.
+//   Ak namiesto JSON uvidíš {"msg":"Missing authorization header"}, funkcia je
+//   nasadená S overovaním JWT a Lemon Squeezy dostáva 401 → licencie nevzniknú.
 //
-// V Lemon Squeezy: Settings → Webhooks → + → URL tejto funkcie, vyber eventy
-// vyššie, skopíruj signing secret do LEMON_WEBHOOK_SECRET.
+// Secrets: LEMON_WEBHOOK_SECRET (Signing secret z LS webhooku),
+//          voliteľne LS_VARIANT_DEMO / _LISTENER / _CREATOR / _PRO
 // ============================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.90.1";
+import {
+  adminClient,
+  findUserIdByEmail,
+  grantFromOrder,
+  resolvePlan,
+  upsertBy,
+  makeLicenseKey,
+  variantMap,
+  PLAN_NAME,
+} from "../_shared/licensing.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const WEBHOOK_SECRET = Deno.env.get("LEMON_WEBHOOK_SECRET") ?? "";
+const WEBHOOK_SECRET = (Deno.env.get("LEMON_WEBHOOK_SECRET") ?? "").trim();
+const admin = adminClient();
 
-// variant ID (Lemon Squeezy) → náš plán
-const VARIANT_TO_PLAN: Record<string, "demo" | "listener" | "creator" | "pro"> = {};
-const addVariant = (id: string | undefined, plan: "demo" | "listener" | "creator" | "pro") => {
-  if (id) VARIANT_TO_PLAN[id] = plan;
-};
-// Známe variant ID (test mode) — natvrdo, aby mapovanie fungovalo aj bez secrets.
-addVariant("2155356", "demo");
-addVariant("2155812", "listener");
-addVariant("2155819", "creator");
-addVariant("2155829", "pro");
-// Voliteľné prepísanie cez secrets (napr. pri prechode na Live s inými ID):
-addVariant(Deno.env.get("LS_VARIANT_DEMO"), "demo");
-addVariant(Deno.env.get("LS_VARIANT_LISTENER"), "listener");
-addVariant(Deno.env.get("LS_VARIANT_CREATOR"), "creator");
-addVariant(Deno.env.get("LS_VARIANT_PRO"), "pro");
-console.log("[lemon-webhook] VARIANT_TO_PLAN =", JSON.stringify(VARIANT_TO_PLAN));
-
-const PLAN_NAME: Record<string, string> = {
-  demo: "Alter Demo",
-  listener: "Alter Listener",
-  creator: "Alter Creator",
-  pro: "Alter Pro",
-};
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
-// ---------- overenie HMAC podpisu ----------
 async function verifySignature(raw: string, signature: string): Promise<boolean> {
   if (!WEBHOOK_SECRET || !signature) return false;
   const enc = new TextEncoder();
@@ -71,63 +43,40 @@ async function verifySignature(raw: string, signature: string): Promise<boolean>
   );
   const mac = await crypto.subtle.sign("HMAC", key, enc.encode(raw));
   const digest = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
-  // porovnanie odolné voči časovému úniku
-  if (digest.length !== signature.length) return false;
+  const sig = signature.trim().toLowerCase();
+  if (digest.length !== sig.length) return false;
   let diff = 0;
-  for (let i = 0; i < digest.length; i++) diff |= digest.charCodeAt(i) ^ signature.charCodeAt(i);
+  for (let i = 0; i < digest.length; i++) diff |= digest.charCodeAt(i) ^ sig.charCodeAt(i);
   return diff === 0;
 }
 
-// jednoduchý generátor licenčného kľúča: ALTR-XXXX-XXXX-XXXX
-function makeLicenseKey(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const block = () =>
-    Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
-  return `ALTR-${block()}-${block()}-${block()}`;
-}
-
-function planFromVariant(variantId: unknown): "demo" | "listener" | "creator" | "pro" | null {
-  const id = variantId == null ? "" : String(variantId);
-  return VARIANT_TO_PLAN[id] ?? null;
-}
-
-// Zápis bez PostgREST onConflict: naše unique indexy sú PARTIAL
-// (WHERE ls_order_id IS NOT NULL), a tie PostgREST .upsert(onConflict) NEakceptuje
-// (chyba 42P10) → predtým zlyhával ticho. Nájdeme riadok podľa kľúča a UPDATE/INSERT,
-// pričom chybu vyhodíme (outer catch vráti 500 → v LS uvidíš neúspešné doručenie).
-async function upsertBy(
-  table: string,
-  keyCol: string,
-  keyVal: string,
-  row: Record<string, unknown>,
-  insertOnly: Record<string, unknown> = {},
-) {
-  const { data: existing, error: selErr } = await admin
-    .from(table)
-    .select("id")
-    .eq(keyCol, keyVal)
-    .maybeSingle();
-  if (selErr) throw new Error(`${table} select(${keyCol}=${keyVal}): ${selErr.message}`);
-  if (existing?.id) {
-    const { error } = await admin.from(table).update(row).eq("id", existing.id);
-    if (error) throw new Error(`${table} update: ${error.message}`);
-    console.log(`[lemon-webhook] ${table} updated (${keyCol}=${keyVal})`);
-  } else {
-    const { error } = await admin.from(table).insert({ ...row, ...insertOnly });
-    if (error) throw new Error(`${table} insert: ${error.message}`);
-    console.log(`[lemon-webhook] ${table} inserted (${keyCol}=${keyVal})`);
-  }
-}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+  // --- health check (bez citlivých údajov) ---
+  if (req.method === "GET") {
+    return json({
+      ok: true,
+      function: "lemon-webhook",
+      webhook_secret_set: WEBHOOK_SECRET.length > 0,
+      service_role_set: Boolean(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")),
+      variants: variantMap(),
+    });
   }
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   const raw = await req.text();
   const signature = req.headers.get("X-Signature") ?? "";
-
   if (!(await verifySignature(raw, signature))) {
+    console.error(
+      "[lemon-webhook] NEPLATNÝ PODPIS – LEMON_WEBHOOK_SECRET v Supabase sa nezhoduje so " +
+        "'Signing secret' webhooku v Lemon Squeezy (pozor: Test a Live mode majú iný webhook). " +
+        `secret_set=${WEBHOOK_SECRET.length > 0}`,
+    );
     return new Response("Invalid signature", { status: 401 });
   }
 
@@ -139,88 +88,41 @@ Deno.serve(async (req) => {
   }
 
   const eventName: string = payload?.meta?.event_name ?? "";
+  const testMode: boolean = payload?.meta?.test_mode ?? false;
   const custom = payload?.meta?.custom_data ?? {};
   const attr = payload?.data?.attributes ?? {};
-  let userId: string | undefined = custom.user_id ?? custom.userId;
   const buyerEmail: string | undefined = attr.user_email ?? custom.email;
+  console.log(
+    `[lemon-webhook] ${eventName} id=${payload?.data?.id} test_mode=${testMode} ` +
+      `custom_user_id=${custom.user_id ?? "-"} email=${buyerEmail ?? "-"}`,
+  );
 
-  // Fallback: ak z checkoutu neprišlo user_id (napr. hosted checkout alebo
-  // nezachytené custom data), napárujeme kupujúceho podľa emailu na profiles.
-  if (!userId && buyerEmail) {
-    const { data: prof, error: profErr } = await admin
-      .from("profiles")
-      .select("id")
-      .ilike("email", buyerEmail)
-      .maybeSingle();
-    if (profErr) console.warn("[lemon-webhook] profiles lookup error:", profErr.message);
-    if (prof?.id) {
-      userId = prof.id as string;
-      console.log("[lemon-webhook] user_id doplnené podľa emailu:", buyerEmail);
+  // user_id z checkoutu, inak párovanie podľa emailu
+  let userId: string | null = (custom.user_id ?? custom.userId ?? null) as string | null;
+  if (userId) {
+    const { data: u, error } = await admin.auth.admin.getUserById(userId);
+    if (error || !u?.user) {
+      console.warn(`[lemon-webhook] user_id ${userId} neexistuje, skúšam email`);
+      userId = null;
     }
   }
+  if (!userId) userId = await findUserIdByEmail(admin, buyerEmail);
 
-  // bez user_id ani emailovej zhody nevieme licenciu priradiť
   if (!userId) {
-    console.warn(`[lemon-webhook] ${eventName}: žiadne user_id ani email match (email=${buyerEmail ?? "?"}), preskakujem`);
+    // 200, aby LS neopakoval donekonečna; lemon-sync to dorovná, keď sa človek
+    // zaregistruje/prihlási s tým istým emailom.
+    console.warn(`[lemon-webhook] ${eventName}: žiadny účet pre email=${buyerEmail ?? "?"}`);
     return new Response("ok (no user match)", { status: 200 });
   }
 
   try {
     switch (eventName) {
       case "order_created": {
-        const orderId = String(payload.data.id);
-        const total = (attr.total ?? 0) / 100; // centy → jednotky
-        const currency = attr.currency ?? "EUR";
-        const firstItem = attr.first_order_item ?? {};
-        const variantId = firstItem.variant_id;
-        const plan = planFromVariant(variantId) ?? "demo";
-        console.log("[lemon-webhook] order_created variant_id=", String(variantId), "plan=", plan, "subscription_id=", String(attr.subscription_id));
-        const productName = firstItem.product_name ?? PLAN_NAME[plan];
-
-        // 1) objednávka do histórie
-        await upsertBy("orders", "ls_order_id", orderId, {
-          user_id: userId,
-          plan,
-          product_name: productName,
-          total,
-          currency,
-          status: attr.refunded ? "refunded" : "paid",
-          invoice_url: attr.urls?.receipt ?? null,
-          card_brand: attr.card_brand ?? null,
-          card_last_four: attr.card_last_four ?? null,
-          ls_order_id: orderId,
-          order_number: attr.order_number ? String(attr.order_number) : null,
-          ordered_at: attr.created_at ?? new Date().toISOString(),
+        const res = await grantFromOrder(admin, userId, {
+          orderId: String(payload.data.id),
+          attr,
         });
-
-        // 2) jednorazová licencia (subscription rieši subscription_created)
-        if (attr.subscription_id == null) {
-          await upsertBy(
-            "licenses",
-            "ls_order_id",
-            orderId,
-            {
-              user_id: userId,
-              plan,
-              product_name: productName,
-              status: "active",
-              period_type: "oneTime",
-              price_paid: total,
-              currency,
-              card_brand: attr.card_brand ?? null,
-              card_last_four: attr.card_last_four ?? null,
-              ls_order_id: orderId,
-              ls_variant_id: variantId ? String(variantId) : null,
-              purchased_at: attr.created_at ?? new Date().toISOString(),
-            },
-            // len pri vytvorení – aby resend neprepísal kľúč / počet aktivácií
-            {
-              license_key: makeLicenseKey(),
-              activations_used: 0,
-              activations_limit: 3,
-            },
-          );
-        }
+        console.log(`[lemon-webhook] order → plan=${res.plan} license=${res.license} user=${userId}`);
         break;
       }
 
@@ -234,11 +136,8 @@ Deno.serve(async (req) => {
       case "subscription_created":
       case "subscription_updated": {
         const subId = String(payload.data.id);
-        const variantId = attr.variant_id;
-        const plan = planFromVariant(variantId) ?? "demo";
-        console.log("[lemon-webhook] subscription variant_id=", String(variantId), "plan=", plan);
-        const productName = attr.product_name ?? PLAN_NAME[plan];
-
+        const plan = resolvePlan(attr.variant_id, attr.variant_name, attr.product_name);
+        if (!plan) throw new Error(`Neznámy variant ${attr.variant_id} (${attr.product_name})`);
         const statusMap: Record<string, string> = {
           active: "active",
           on_trial: "active",
@@ -248,46 +147,43 @@ Deno.serve(async (req) => {
           cancelled: "cancelled",
           expired: "expired",
         };
-        const status = statusMap[attr.status] ?? "active";
-
         await upsertBy(
+          admin,
           "licenses",
           "ls_subscription_id",
           subId,
           {
             user_id: userId,
             plan,
-            product_name: productName,
-            status,
+            product_name: PLAN_NAME[plan],
+            status: statusMap[attr.status] ?? "active",
             period_type: "subscription",
-            currency: "EUR",
             renews_at: attr.renews_at ?? null,
             ends_at: attr.ends_at ?? null,
             customer_portal_url: attr.urls?.customer_portal ?? null,
             card_brand: attr.card_brand ?? null,
             card_last_four: attr.card_last_four ?? null,
             ls_subscription_id: subId,
-            ls_variant_id: variantId ? String(variantId) : null,
+            ls_variant_id: attr.variant_id != null ? String(attr.variant_id) : null,
           },
-          eventName === "subscription_created"
-            ? { license_key: makeLicenseKey(), activations_used: 0, activations_limit: 3 }
-            : {},
+          { license_key: makeLicenseKey(), activations_used: 0, activations_limit: 3 },
         );
         break;
       }
 
       case "subscription_cancelled": {
-        const subId = String(payload.data.id);
         await admin
           .from("licenses")
           .update({ status: "cancelled", ends_at: attr.ends_at ?? null })
-          .eq("ls_subscription_id", subId);
+          .eq("ls_subscription_id", String(payload.data.id));
         break;
       }
 
       case "subscription_expired": {
-        const subId = String(payload.data.id);
-        await admin.from("licenses").update({ status: "expired" }).eq("ls_subscription_id", subId);
+        await admin
+          .from("licenses")
+          .update({ status: "expired" })
+          .eq("ls_subscription_id", String(payload.data.id));
         break;
       }
 
@@ -295,8 +191,8 @@ Deno.serve(async (req) => {
         console.log(`[lemon-webhook] nespracovaný event: ${eventName}`);
     }
   } catch (err) {
-    console.error(`[lemon-webhook] chyba pri ${eventName}:`, err);
-    return new Response("processing error", { status: 500 });
+    console.error(`[lemon-webhook] CHYBA pri ${eventName}:`, (err as Error).message ?? err);
+    return new Response(`processing error: ${(err as Error).message ?? err}`, { status: 500 });
   }
 
   return new Response("ok", { status: 200 });

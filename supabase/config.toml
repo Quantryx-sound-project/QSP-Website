@@ -1,1 +1,18 @@
 project_id = "rocsxttousdashuavfut"
+
+# Tieto funkcie si overujú prístup samy (HMAC podpis / JWT používateľa).
+# Vďaka tomu netreba pri deployi pamätať na --no-verify-jwt.
+[functions.lemon-webhook]
+verify_jwt = false
+
+[functions.lemon-sync]
+verify_jwt = false
+
+[functions.app-activate]
+verify_jwt = false
+
+[functions.app-deactivate]
+verify_jwt = false
+
+[functions.track]
+verify_jwt = false
