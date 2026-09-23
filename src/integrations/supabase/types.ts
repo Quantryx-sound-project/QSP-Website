@@ -80,7 +80,7 @@ export type Database = {
           user_id: string
           plan: "demo" | "listener" | "creator" | "pro"
           product_name: string | null
-          status: "active" | "cancelled" | "revoked" | "refunded" | "expired"
+          status: "active" | "cancelled" | "revoked" | "refunded" | "expired" | "deactivated"
           period_type: "free" | "oneTime" | "subscription"
           license_key: string | null
           activations_used: number
@@ -95,6 +95,7 @@ export type Database = {
           ls_order_id: string | null
           ls_subscription_id: string | null
           ls_variant_id: string | null
+          deactivated_at: string | null
           purchased_at: string
           created_at: string
           updated_at: string
@@ -104,7 +105,7 @@ export type Database = {
           user_id: string
           plan: "demo" | "listener" | "creator" | "pro"
           product_name?: string | null
-          status?: "active" | "cancelled" | "revoked" | "refunded" | "expired"
+          status?: "active" | "cancelled" | "revoked" | "refunded" | "expired" | "deactivated"
           period_type?: "free" | "oneTime" | "subscription"
           license_key?: string | null
           activations_used?: number
@@ -128,7 +129,7 @@ export type Database = {
           user_id?: string
           plan?: "demo" | "listener" | "creator" | "pro"
           product_name?: string | null
-          status?: "active" | "cancelled" | "revoked" | "refunded" | "expired"
+          status?: "active" | "cancelled" | "revoked" | "refunded" | "expired" | "deactivated"
           period_type?: "free" | "oneTime" | "subscription"
           license_key?: string | null
           activations_used?: number

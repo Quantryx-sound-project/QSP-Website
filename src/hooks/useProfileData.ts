@@ -101,6 +101,23 @@ export function useLicenses(opts: { pollMs?: number | false } = {}) {
   });
 }
 
+// ---- Deaktivácia vlastnej licencie (napr. pred upgradom) -------------------
+// Volá SQL funkciu public.deactivate_license (supabase/license_deactivate.sql).
+export function useDeactivateLicense() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (licenseId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("deactivate_license", {
+        p_license_id: licenseId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["licenses", user?.id] }),
+  });
+}
+
 // ---- Dorovnanie licencií priamo z Lemon Squeezy (edge funkcia lemon-sync) ----
 // Záchrana pre prípad, že webhook nedorazí. Chyby nehádžeme – len vrátime výsledok.
 export function useSyncLicenses() {

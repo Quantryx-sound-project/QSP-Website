@@ -39,6 +39,7 @@ import {
   useLicenses,
   useOrders,
   useSyncLicenses,
+  useDeactivateLicense,
   useUpdateProfile,
   describeSupabaseError,
   type License,
@@ -59,6 +60,18 @@ const Dashboard = () => {
   const licensesQ = useLicenses({ pollMs: awaitingPayment ? 3000 : false });
   const ordersQ = useOrders();
   const syncLicenses = useSyncLicenses();
+  const deactivateLicense = useDeactivateLicense();
+  const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
+  const doDeactivate = (lic: License) => {
+    deactivateLicense.mutate(lic.id, {
+      onSuccess: () => {
+        setConfirmDeactivateId(null);
+        toast.success(t("account.deactivated"), { description: licenseName(lic) });
+      },
+      onError: (e) =>
+        toast.error(t("account.deactivateErr"), { description: describeSupabaseError(e) }),
+    });
+  };
   const initialLicenseIds = useRef<Set<string> | null>(null);
   const updateProfile = useUpdateProfile();
 
@@ -144,6 +157,8 @@ const Dashboard = () => {
         return { label: t("account.statusCancelled"), cls: "bg-amber-500/10 text-amber-500 border-amber-500/30" };
       case "expired":
         return { label: t("account.statusExpired"), cls: "bg-muted text-muted-foreground border-border/40" };
+      case "deactivated":
+        return { label: t("account.statusDeactivated"), cls: "bg-muted text-muted-foreground border-border/40" };
       case "refunded":
         return { label: t("account.statusRefunded"), cls: "bg-muted text-muted-foreground border-border/40" };
       default:
@@ -571,6 +586,45 @@ const Dashboard = () => {
                                   <Apple className="mr-2 h-4 w-4" />
                                   macOS
                                 </Button>
+                              </div>
+                            )}
+
+                            {lic.status === "active" && lic.period_type !== "subscription" && (
+                              <div className="mt-3 border-t border-border/30 pt-3">
+                                {confirmDeactivateId === lic.id ? (
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-muted-foreground">
+                                      {t("account.deactivateConfirm")}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        disabled={deactivateLicense.isPending}
+                                        onClick={() => doDeactivate(lic)}
+                                      >
+                                        {deactivateLicense.isPending && (
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        {t("account.deactivateYes")}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setConfirmDeactivateId(null)}
+                                      >
+                                        {t("account.deactivateNo")}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                                    onClick={() => setConfirmDeactivateId(lic.id)}
+                                  >
+                                    {t("account.deactivate")}
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>

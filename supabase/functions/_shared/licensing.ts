@@ -166,6 +166,8 @@ export async function grantFromOrder(
     return { plan, license: "skipped" };
   }
 
+  // status sa nastaví LEN pri vytvorení licencie – opakovaný webhook / sync tak
+  // NEobnoví licenciu, ktorú používateľ deaktivoval alebo admin zrušil.
   const license = await upsertBy(
     admin,
     "licenses",
@@ -175,7 +177,6 @@ export async function grantFromOrder(
       user_id: userId,
       plan,
       product_name: productName,
-      status: refunded ? "refunded" : "active",
       period_type: "oneTime",
       price_paid: total,
       currency,
@@ -185,7 +186,15 @@ export async function grantFromOrder(
       ls_variant_id: item.variant_id != null ? String(item.variant_id) : null,
       purchased_at: attr.created_at ?? new Date().toISOString(),
     },
-    { license_key: makeLicenseKey(), activations_used: 0, activations_limit: 3 },
+    {
+      status: refunded ? "refunded" : "active",
+      license_key: makeLicenseKey(),
+      activations_used: 0,
+      activations_limit: 3,
+    },
   );
+  if (refunded) {
+    await admin.from("licenses").update({ status: "refunded" }).eq("ls_order_id", orderId);
+  }
   return { plan, license };
 }
