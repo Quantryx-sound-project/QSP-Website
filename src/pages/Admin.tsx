@@ -529,7 +529,7 @@ const Admin = () => {
                         <td className="py-2 pr-4">{w.email ?? "–"}</td>
                         <td className="py-2 pr-4">{w.instagram ?? "–"}</td>
                         <td className="py-2 pr-4">{w.specialization ?? "–"}</td>
-                        <td className="py-2 pr-4 max-w-[22ch] truncate" title={w.message ?? ""}>{w.message ?? "–"}</td>
+                        <td className="py-2 pr-4 min-w-[28ch] max-w-[60ch] whitespace-pre-wrap break-words">{w.message ?? "–"}</td>
                         <td className="py-2 tabular-nums whitespace-nowrap text-muted-foreground">{fmtDate(w.created_at)}</td>
                       </tr>
                     ))}
