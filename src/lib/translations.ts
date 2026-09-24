@@ -10,6 +10,7 @@ export const translations = {
       about: "About",
       aboutFull: "About Quantryx",
       alter: "Alter",
+      reviews: "Reviews & projects",
       demo: "Demo",
       listener: "Listener",
       creator: "Creator",
@@ -410,6 +411,7 @@ export const translations = {
       products: "Products",
       contact: "Contact",
       rights: "All rights reserved.",
+      refundPolicy: "Refund Policy",
     },
     notfound: {
       title: "Page not found",
@@ -430,6 +432,7 @@ export const translations = {
       about: "O nás",
       aboutFull: "O Quantryx",
       alter: "Alter",
+      reviews: "Recenzie a projekty",
       demo: "Demo",
       listener: "Listener",
       creator: "Creator",
@@ -866,6 +869,7 @@ export const translations = {
       products: "Produkty",
       contact: "Kontakt",
       rights: "Všetky práva vyhradené.",
+      refundPolicy: "Zásady vrátenia peňazí",
     },
     notfound: {
       title: "Stránka sa nenašla",

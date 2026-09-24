@@ -68,6 +68,9 @@ Deno.serve(async (req) => {
       const attr = o.attributes ?? {};
       // email musí presne sedieť (filter LS je case-insensitive, istota)
       if ((attr.user_email ?? "").toLowerCase() !== email.toLowerCase()) continue;
+      // Testovacie (Test mode) objednávky nedorovnávame – licencie z nich rieši len
+      // webhook, takže ručne zmazané testovacie licencie sa už nevrátia.
+      if (attr.test_mode === true) continue;
       try {
         const res = await grantFromOrder(admin, user.id, { orderId: String(o.id), attr });
         results.push({ order: o.id, ...res });

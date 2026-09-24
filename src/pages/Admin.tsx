@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import TrendChart, { type TrendPoint } from "@/components/TrendChart";
+import AdminRefunds from "@/components/AdminRefunds";
 
 type Summary = {
   visitors: number;
@@ -233,6 +234,8 @@ const Admin = () => {
             ))}
           </div>
         </div>
+
+        <AdminRefunds />
 
         {loading && <p className="mt-8 text-muted-foreground">Načítavam…</p>}
 

@@ -118,6 +118,82 @@ export function useDeactivateLicense() {
   });
 }
 
+// ---- Refund (30-dňová garancia) ---------------------------------------------
+// Tabuľka + funkcie: supabase/refunds.sql
+export type RefundRequest = {
+  id: string;
+  license_id: string;
+  plan: string;
+  amount: number | null;
+  currency: string | null;
+  reason: string;
+  status: "pending" | "refunded" | "rejected" | "withdrawn" | "failed";
+  admin_note: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const looseDb = supabase as any;
+
+export function useRefundRequests() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["refund_requests", user?.id],
+    enabled: Boolean(user?.id && supabaseConfigured),
+    retry: RETRY,
+    queryFn: async (): Promise<RefundRequest[]> => {
+      const { data, error } = await looseDb
+        .from("refund_requests")
+        .select("id, license_id, plan, amount, currency, reason, status, admin_note, created_at, resolved_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      // Ak tabuľka ešte neexistuje (SQL nespustené), nezhadzujeme profil.
+      if (error) {
+        console.warn("[refund_requests]", describeSupabaseError(error));
+        return [];
+      }
+      return (data ?? []) as RefundRequest[];
+    },
+  });
+}
+
+export function useRequestRefund() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: {
+      licenseId: string;
+      reason: string;
+      details: string;
+      systemInfo: string;
+      contactedSupport: boolean;
+    }) => {
+      const { error } = await looseDb.rpc("request_refund", {
+        p_license_id: args.licenseId,
+        p_reason: args.reason,
+        p_details: args.details,
+        p_system_info: args.systemInfo,
+        p_contacted_support: args.contactedSupport,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["refund_requests", user?.id] }),
+  });
+}
+
+export function useCancelRefund() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await looseDb.rpc("cancel_refund_request", { p_request_id: requestId });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["refund_requests", user?.id] }),
+  });
+}
+
 // ---- Dorovnanie licencií priamo z Lemon Squeezy (edge funkcia lemon-sync) ----
 // Záchrana pre prípad, že webhook nedorazí. Chyby nehádžeme – len vrátime výsledok.
 export function useSyncLicenses() {

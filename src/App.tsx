@@ -22,6 +22,8 @@ import Admin from "./pages/Admin";
 import Portfolio from "./pages/Portfolio";
 import Design from "./pages/Design";
 import EarlyAccess from "./pages/EarlyAccess";
+import RefundPolicy from "./pages/RefundPolicy";
+import Reviews from "./pages/Reviews";
 
 const queryClient = new QueryClient();
 
@@ -46,8 +48,10 @@ const App = () => (
               }
             />
             <Route path="/early-access" element={<EarlyAccess />} />
+            <Route path="/alter/reviews" element={<Reviews />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/design" element={<Design />} />
             <Route path="/login" element={<Login />} />

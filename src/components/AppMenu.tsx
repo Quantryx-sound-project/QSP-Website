@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3, type LucideIcon } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, MessageSquareHeart, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -58,6 +58,8 @@ export const navItems: Item[] = [
 const alterItems: Item[] = [
   // Early Access je teraz hlavný vstup k Alteru (predaj ešte nebeží).
   { to: "/early-access", label: "What is Alter", emblem: embAlter, underlay: ulEarlyAccess },
+  // Recenzie + projekty používateľov – verejné (čítať môže každý).
+  { to: "/alter/reviews", labelKey: "nav.reviews", icon: MessageSquareHeart, underlay: ulAlter },
   { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
@@ -205,6 +207,7 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
   const eligible = isAdmin === true || inWaitlist === true;
   const visibleAlterItems = alterItems.filter((item) => {
     if (item.to === "/early-access") return true;
+    if (item.to === "/alter/reviews") return true;
     if (item.to === "/pricing") return eligible;
     if (item.to.startsWith("/product/")) return eligible;
     return true;

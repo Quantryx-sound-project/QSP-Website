@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
 import { useT } from "@/lib/i18n";
 import { formatEur } from "@/lib/pricing";
+import RefundFlow from "@/components/RefundFlow";
 import { installerUrl, installerUrlMac } from "@/lib/earlyAccess";
 import { supabaseConfigured } from "@/integrations/supabase/client";
 import {
@@ -40,6 +41,9 @@ import {
   useOrders,
   useSyncLicenses,
   useDeactivateLicense,
+  useRefundRequests,
+  useCancelRefund,
+  type RefundRequest,
   useUpdateProfile,
   describeSupabaseError,
   type License,
@@ -61,6 +65,49 @@ const Dashboard = () => {
   const ordersQ = useOrders();
   const syncLicenses = useSyncLicenses();
   const deactivateLicense = useDeactivateLicense();
+
+  // ---- 30-dňová garancia vrátenia peňazí ----
+  const refundsQ = useRefundRequests();
+  const cancelRefund = useCancelRefund();
+  const [refundOpenId, setRefundOpenId] = useState<string | null>(null);
+  const refundByLicense = useMemo(() => {
+    const m = new Map<string, RefundRequest>();
+    for (const r of refundsQ.data ?? []) if (!m.has(r.license_id)) m.set(r.license_id, r);
+    return m;
+  }, [refundsQ.data]);
+  const REFUND_DAYS = 30;
+  const refundDaysLeft = (lic: License) => {
+    if (lic.status !== "active" || lic.period_type !== "oneTime" || !lic.ls_order_id) return 0;
+    if (!(Number(lic.price_paid) > 0)) return 0;
+    const end = new Date(lic.purchased_at).getTime() + REFUND_DAYS * 86400000;
+    return Math.max(0, Math.ceil((end - Date.now()) / 86400000));
+  };
+  const R =
+    lang === "sk"
+      ? {
+          guarantee: "30-dňová garancia vrátenia peňazí",
+          daysLeft: (n: number) => (n === 1 ? "zostáva 1 deň" : n < 5 ? `zostávajú ${n} dni` : `zostáva ${n} dní`),
+          request: "Požiadať o vrátenie peňazí",
+          pending: "Žiadosť o vrátenie peňazí sa posudzuje",
+          pendingSub: (d: string) => `Odoslaná ${d}. Odpovieme do 3 pracovných dní.`,
+          withdraw: "Stiahnuť žiadosť",
+          withdrawn: "Žiadosť bola stiahnutá",
+          rejected: "Žiadosť o vrátenie peňazí bola zamietnutá",
+          refunded: "Peniaze boli vrátené",
+          refundedSub: "Lemon Squeezy ich pošle na pôvodný spôsob platby (zvyčajne 5–10 pracovných dní).",
+        }
+      : {
+          guarantee: "30-day money-back guarantee",
+          daysLeft: (n: number) => (n === 1 ? "1 day left" : `${n} days left`),
+          request: "Request a refund",
+          pending: "Refund request under review",
+          pendingSub: (d: string) => `Submitted ${d}. We'll reply within 3 business days.`,
+          withdraw: "Withdraw request",
+          withdrawn: "Request withdrawn",
+          rejected: "Refund request declined",
+          refunded: "Refund issued",
+          refundedSub: "Lemon Squeezy sends it to your original payment method (usually 5–10 business days).",
+        };
   const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
   const doDeactivate = (lic: License) => {
     deactivateLicense.mutate(lic.id, {
@@ -589,7 +636,73 @@ const Dashboard = () => {
                               </div>
                             )}
 
-                            {lic.status === "active" && lic.period_type !== "subscription" && (
+                            {(() => {
+                              const req = refundByLicense.get(lic.id);
+                              const daysLeft = refundDaysLeft(lic);
+                              if (req?.status === "pending") {
+                                return (
+                                  <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-xs">
+                                    <p className="font-medium text-amber-500">{R.pending}</p>
+                                    <p className="mt-1 text-muted-foreground">
+                                      {R.pendingSub(showDate(req.created_at))}
+                                    </p>
+                                    <button
+                                      className="mt-2 text-muted-foreground underline hover:text-foreground"
+                                      disabled={cancelRefund.isPending}
+                                      onClick={() =>
+                                        cancelRefund.mutate(req.id, {
+                                          onSuccess: () => toast.success(R.withdrawn),
+                                          onError: (e) => toast.error(describeSupabaseError(e)),
+                                        })
+                                      }
+                                    >
+                                      {R.withdraw}
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <>
+                                  {req?.status === "refunded" && (
+                                    <div className="mt-3 rounded-md border border-border/40 p-3 text-xs">
+                                      <p className="font-medium">{R.refunded}</p>
+                                      <p className="mt-1 text-muted-foreground">{R.refundedSub}</p>
+                                    </div>
+                                  )}
+                                  {req?.status === "rejected" && (
+                                    <div className="mt-3 rounded-md border border-border/40 p-3 text-xs">
+                                      <p className="font-medium">{R.rejected}</p>
+                                      {req.admin_note && (
+                                        <p className="mt-1 text-muted-foreground">{req.admin_note}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  {daysLeft > 0 && refundOpenId !== lic.id && (
+                                    <p className="mt-3 text-xs text-muted-foreground">
+                                      {R.guarantee} · {R.daysLeft(daysLeft)} ·{" "}
+                                      <button
+                                        className="underline hover:text-foreground"
+                                        onClick={() => setRefundOpenId(lic.id)}
+                                      >
+                                        {R.request}
+                                      </button>
+                                    </p>
+                                  )}
+                                  {daysLeft > 0 && refundOpenId === lic.id && (
+                                    <RefundFlow
+                                      license={lic}
+                                      licenseName={licenseName(lic)}
+                                      amountLabel={formatEur(Number(lic.price_paid))}
+                                      onClose={() => setRefundOpenId(null)}
+                                    />
+                                  )}
+                                </>
+                              );
+                            })()}
+
+                            {lic.status === "active" &&
+                              lic.period_type !== "subscription" &&
+                              refundByLicense.get(lic.id)?.status !== "pending" && (
                               <div className="mt-3 border-t border-border/30 pt-3">
                                 {confirmDeactivateId === lic.id ? (
                                   <div className="space-y-2">

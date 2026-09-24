@@ -73,6 +73,10 @@ const Footer = () => {
 
         <div className="mt-10 pt-6 border-t border-border/40 text-xs text-muted-foreground">
           © {new Date().getFullYear()} {site.brand}. {t("footer.rights")}
+          {" · "}
+          <Link to="/refund-policy" className="hover:text-foreground">
+            {t("footer.refundPolicy")}
+          </Link>
         </div>
       </div>
     </footer>
