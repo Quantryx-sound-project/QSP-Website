@@ -34,7 +34,7 @@ const Footer = () => {
               {session && (
                 <li><Link to="/early-access" className="hover:text-foreground">Early Access</Link></li>
               )}
-              {isAdmin && (
+              {(session || isAdmin) && (
                 <li><Link to="/pricing" className="hover:text-foreground">{t("nav.pricing")}</Link></li>
               )}
               <li><Link to="/about" className="hover:text-foreground">{t("nav.aboutFull")}</Link></li>

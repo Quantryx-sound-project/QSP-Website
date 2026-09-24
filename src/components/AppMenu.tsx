@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { LogOut, ChevronDown, BarChart3, MessageSquareHeart, type LucideIcon } from "lucide-react";
+import { LogOut, ChevronDown, BarChart3, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,7 @@ import ulAlter from "@/assets/backgrounds/underlay-alter.webp"; // magenta manda
 import ulEarlyAccess from "@/assets/backgrounds/underlay-earlyaccess.webp"; // cosmic spiral — Early Access bg
 import ulMain from "@/assets/backgrounds/underlay-main.webp"; // crystals — Main page bg
 import ulPortfolio from "@/assets/backgrounds/underlay-portfolio.webp"; // quantum well — Portfolio bg
+import ulReviews from "@/assets/backgrounds/underlay-reviews.webp"; // fialové kryštály — Reviews bg
 
 type Item = {
   to: string;
@@ -57,9 +58,9 @@ export const navItems: Item[] = [
 // lebo to je najcastejsia otazka pred stiahnutim.
 const alterItems: Item[] = [
   // Early Access je teraz hlavný vstup k Alteru (predaj ešte nebeží).
-  { to: "/early-access", label: "What is Alter", emblem: embAlter, underlay: ulEarlyAccess },
+  { to: "/early-access", label: "What is Alter", emblem: embAlter3D, underlay: ulEarlyAccess },
   // Recenzie + projekty používateľov – verejné (čítať môže každý).
-  { to: "/alter/reviews", labelKey: "nav.reviews", icon: MessageSquareHeart, underlay: ulAlter },
+  { to: "/alter/reviews", labelKey: "nav.reviews", emblem: embAlter, underlay: ulReviews },
   { to: "/pricing", labelKey: "nav.pricing", emblem: embPricing, underlay: ulPricing },
   { to: "/product/demo", labelKey: "plans.demoName", emblem: embDemo, underlay: ulDemo },
   { to: "/product/listener", labelKey: "plans.listenerName", emblem: embListener, underlay: ulListener },
@@ -204,7 +205,8 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
   // (rozdávame ho po ľuďoch, verejnosť oň zatiaľ nemá vedieť).
   // "What is Alter" je verejné; Pricing a karty tierov len pre prihláseného
   // vo waitliste (alebo admina).
-  const eligible = isAdmin === true || inWaitlist === true;
+  // Od 09/2026: cenník a karty edícií vidí každý prihlásený (nielen waitlist).
+  const eligible = Boolean(session) || isAdmin === true || inWaitlist === true;
   const visibleAlterItems = alterItems.filter((item) => {
     if (item.to === "/early-access") return true;
     if (item.to === "/alter/reviews") return true;
