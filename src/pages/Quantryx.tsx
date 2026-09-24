@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import ModuleBackground from "@/components/ModuleBackground";
 import WaitlistSection from "@/components/WaitlistSection";
 import SupportSection from "@/components/SupportSection";
+import { showDonations } from "@/lib/earlyAccess";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
@@ -127,7 +128,7 @@ const Quantryx = () => {
         </div>
       </section>
 
-      <SupportSection />
+      {showDonations && <SupportSection />}
 
       <section className="pb-24 px-6">
         <div className="container mx-auto">

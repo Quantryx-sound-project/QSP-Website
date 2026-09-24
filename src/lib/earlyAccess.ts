@@ -21,6 +21,11 @@ export const donationUrl = "https://buymeacoffee.com/quantryx";
 // kde ľudia zaplatia priamo na stránke bez registrácie a bez presmerovania.
 export const bmcUsername = "quantryx";
 
+// Buy Me a Coffee sekcia na webe. DOČASNE VYPNUTÉ kvôli schvaľovaniu obchodu
+// v Lemon Squeezy (nepovoľujú donácie popri produktoch s pevnou cenou).
+// Po schválení prepni na true a pushni — sekcia sa vráti presne ako bola.
+export const showDonations = false;
+
 // Verzia buildu (zobrazí sa pri stiahnutí).
 export const earlyAccessVersion = "0.0.1 — Early Access";
 

@@ -144,8 +144,13 @@ const Dashboard = () => {
     setEditing(true);
   };
   const saveProfile = () => {
+    // Meno je povinné – zobrazuje sa pri recenziách a komentároch.
+    if (name.trim().length < 2) {
+      toast.error(t("account.nameRequired"));
+      return;
+    }
     updateProfile.mutate(
-      { name: name.trim() || null, country: country.trim() || null },
+      { name: name.trim(), country: country.trim() || null },
       {
         onSuccess: () => {
           toast.success(t("account.profileSaved"));

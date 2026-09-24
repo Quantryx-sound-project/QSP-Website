@@ -6,16 +6,18 @@
 -- Pravidlá:
 --   • čítať recenzie a komentáre môže ktokoľvek (aj neprihlásený)
 --   • komentovať / lajkovať môže každý prihlásený
---   • recenziu (1 na človeka) môže napísať len ten, kto má zakúpenú licenciu
+--   • recenziu (1 na človeka) môže napísať len ten, kto má licenciu (aj Demo)
 --     → funkcia can_review() nižšie (tam sa dá pravidlo ľahko zmeniť)
+--   • písať (recenziu aj komentár) môže len ten, kto má v profile vyplnené meno
+--   • pri mene sa zobrazuje edícia licencie (Demo / Listener / Creator / Pro)
+--     a sama sa aktualizuje, keď si človek licenciu zmení (napr. Demo → Pro)
 --   • autor môže svoju recenziu / komentár upraviť alebo zmazať
 --   • admin (profiles.is_admin) môže zmazať čokoľvek
 --   • video: max 20 MB, mp4/webm/mov (dĺžku max 10 s kontroluje web)
 -- ============================================================
 
 -- ---------- 1. Kto smie písať recenziu ----------
--- Ktoré edície sa rátajú ako "zakúpená licencia". Demo je zadarmo, preto nie.
--- Ak chceš pustiť aj Early Access / demo, pridaj 'demo' do zoznamu.
+-- Ktoré edície sa rátajú ako licencia (Demo áno – má svoje limity, ale je to licencia).
 create or replace function public.can_review(p_user uuid default auth.uid())
 returns boolean
 language sql
@@ -27,11 +29,11 @@ as $$
     select 1 from public.licenses l
     where l.user_id = p_user
       and l.status = 'active'
-      and l.plan in ('listener', 'creator', 'pro')
+      and l.plan in ('demo', 'listener', 'creator', 'pro')
   );
 $$;
 
--- Najvyššia edícia (na odznak "Pro owner" pri recenzii).
+-- Najvyššia aktívna edícia človeka (odznak pri mene). Bez licencie = null.
 create or replace function public.review_best_plan(p_user uuid)
 returns text
 language sql
@@ -40,12 +42,13 @@ security definer
 set search_path = public
 as $$
   select l.plan from public.licenses l
-  where l.user_id = p_user and l.status = 'active' and l.plan in ('listener', 'creator', 'pro')
-  order by case l.plan when 'pro' then 3 when 'creator' then 2 else 1 end desc
+  where l.user_id = p_user and l.status = 'active' and l.plan in ('demo', 'listener', 'creator', 'pro')
+  order by case l.plan when 'pro' then 4 when 'creator' then 3 when 'listener' then 2 else 1 end desc
   limit 1;
 $$;
 
 -- Verejné meno autora (profiles sú súkromné, preto meno ukladáme k príspevku).
+-- Vráti null, ak meno nie je vyplnené → zápis sa zamietne ('name_required').
 create or replace function public.review_display_name(p_user uuid)
 returns text
 language sql
@@ -53,10 +56,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    (select nullif(trim(p.name), '') from public.profiles p where p.id = p_user),
-    'Alter user'
-  );
+  select nullif(trim(p.name), '') from public.profiles p where p.id = p_user;
 $$;
 
 -- ---------- 2. Tabuľky ----------
@@ -85,11 +85,13 @@ create table if not exists public.review_comments (
   review_id    uuid not null references public.reviews (id) on delete cascade,
   user_id      uuid not null references auth.users (id) on delete cascade,
   author_name  text not null default 'Alter user',
+  author_plan  text,
   body         text not null check (char_length(trim(body)) between 1 and 1000),
   edited       boolean not null default false,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+alter table public.review_comments add column if not exists author_plan text;
 create index if not exists review_comments_review_idx on public.review_comments (review_id, created_at);
 
 create table if not exists public.review_likes (
@@ -107,9 +109,13 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_name text;
 begin
   if tg_op = 'INSERT' then
-    new.author_name := public.review_display_name(new.user_id);
+    v_name := public.review_display_name(new.user_id);
+    if v_name is null then raise exception 'name_required'; end if;
+    new.author_name := v_name;
     new.author_plan := public.review_best_plan(new.user_id);
     new.likes_count := 0;
     new.comments_count := 0;
@@ -121,7 +127,9 @@ begin
        or new.project_url is distinct from old.project_url
        or new.video_path is distinct from old.video_path then
       new.edited := true;
-      new.author_name := public.review_display_name(new.user_id);
+      v_name := public.review_display_name(new.user_id);
+      if v_name is null then raise exception 'name_required'; end if;
+      new.author_name := v_name;
     end if;
   end if;
   new.updated_at := now();
@@ -139,6 +147,8 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_name text;
 begin
   if tg_op = 'INSERT' then
     -- jednoduchá ochrana proti spamu: max 20 komentárov za hodinu
@@ -146,7 +156,10 @@ begin
         where c.user_id = new.user_id and c.created_at > now() - interval '1 hour') >= 20 then
       raise exception 'too_many_comments';
     end if;
-    new.author_name := public.review_display_name(new.user_id);
+    v_name := public.review_display_name(new.user_id);
+    if v_name is null then raise exception 'name_required'; end if;
+    new.author_name := v_name;
+    new.author_plan := public.review_best_plan(new.user_id);
     new.edited := false;
     new.created_at := now();
   elsif new.body is distinct from old.body then
@@ -192,6 +205,70 @@ create trigger review_comments_count
 
 -- Počítadlá mení len trigger → "edited" sa pri lajku nesmie zapnúť.
 -- (reviews_before_write kontroluje len obsahové stĺpce, takže je to v poriadku.)
+
+-- ---------- 3b. Meno a edícia sa držia aktuálne ----------
+-- Keď si človek zmení meno v profile alebo získa/zmení licenciu,
+-- prepíše sa to pri všetkých jeho recenziách a komentároch.
+create or replace function public.review_sync_author(p_user uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text := public.review_display_name(p_user);
+  v_plan text := public.review_best_plan(p_user);
+begin
+  update public.reviews
+     set author_name = coalesce(v_name, author_name), author_plan = v_plan
+   where user_id = p_user
+     and (author_name is distinct from coalesce(v_name, author_name) or author_plan is distinct from v_plan);
+  update public.review_comments
+     set author_name = coalesce(v_name, author_name), author_plan = v_plan
+   where user_id = p_user
+     and (author_name is distinct from coalesce(v_name, author_name) or author_plan is distinct from v_plan);
+end;
+$$;
+revoke execute on function public.review_sync_author(uuid) from public, anon, authenticated;
+
+create or replace function public.review_sync_trigger()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_table_name = 'profiles' then
+    perform public.review_sync_author(new.id);
+  elsif tg_op = 'DELETE' then
+    perform public.review_sync_author(old.user_id);
+  else
+    perform public.review_sync_author(new.user_id);
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists profiles_review_sync on public.profiles;
+create trigger profiles_review_sync
+  after update of name on public.profiles
+  for each row execute function public.review_sync_trigger();
+
+drop trigger if exists licenses_review_sync on public.licenses;
+create trigger licenses_review_sync
+  after insert or update of plan, status or delete on public.licenses
+  for each row execute function public.review_sync_trigger();
+
+-- dorovnanie existujúcich záznamov (ak SQL spúšťaš znova)
+do $$
+declare u uuid;
+begin
+  for u in select distinct user_id from public.reviews
+           union select distinct user_id from public.review_comments
+  loop
+    perform public.review_sync_author(u);
+  end loop;
+end $$;
 
 -- ---------- 4. Práva (RLS) ----------
 alter table public.reviews         enable row level security;

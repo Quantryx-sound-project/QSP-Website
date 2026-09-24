@@ -43,6 +43,11 @@ const Login = () => {
         toast.success(t("login.okSignin"));
         navigate(from, { replace: true });
       } else {
+        // Meno je povinné (zobrazuje sa pri recenziách a komentároch).
+        if (name.length < 2) {
+          toast.error(t("account.nameRequired"));
+          return;
+        }
         const { error } = await signUp(emailValue, password, name);
         if (error) {
           toast.error(t("login.errSignup"), { description: error.message });
@@ -121,7 +126,7 @@ const Login = () => {
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="name">{t("login.name")}</Label>
-                  <Input id="name" name="name" placeholder={t("login.namePh")} required={!isLogin} />
+                  <Input id="name" name="name" placeholder={t("login.namePh")} required={!isLogin} minLength={2} maxLength={60} />
                 </div>
               )}
 

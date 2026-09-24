@@ -35,6 +35,7 @@ export type ReviewComment = {
   review_id: string;
   user_id: string;
   author_name: string;
+  author_plan: string | null;
   body: string;
   edited: boolean;
   created_at: string;
@@ -199,7 +200,7 @@ export function useComments(reviewId: string, enabled: boolean) {
     queryFn: async (): Promise<ReviewComment[]> => {
       const { data, error } = await db
         .from("review_comments")
-        .select("id, review_id, user_id, author_name, body, edited, created_at")
+        .select("id, review_id, user_id, author_name, author_plan, body, edited, created_at")
         .eq("review_id", reviewId)
         .order("created_at", { ascending: true });
       if (error) throw error;
