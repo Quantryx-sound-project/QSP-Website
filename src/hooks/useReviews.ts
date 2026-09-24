@@ -9,7 +9,7 @@ const db = supabase as any;
 
 export const PRODUCT = "alter";
 export const VIDEO_BUCKET = "review-videos";
-export const VIDEO_MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+export const VIDEO_MAX_BYTES = 30 * 1024 * 1024; // 30 MB
 export const VIDEO_MAX_SECONDS = 10;
 export const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
@@ -23,6 +23,8 @@ export type Review = {
   youtube_url: string | null;
   project_url: string | null;
   video_path: string | null;
+  media_caption: string | null;
+  link_caption: string | null;
   likes_count: number;
   comments_count: number;
   edited: boolean;
@@ -47,6 +49,8 @@ export type ReviewInput = {
   youtube_url: string | null;
   project_url: string | null;
   video_path: string | null;
+  media_caption: string | null;
+  link_caption: string | null;
 };
 
 export const videoPublicUrl = (path: string) =>

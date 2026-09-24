@@ -79,6 +79,12 @@ const TEXT = {
     replaceClip: "Replace",
     linkLabel: "Link to your project (optional)",
     linkPlaceholder: "Spotify, SoundCloud, Instagram, your website…",
+    captionYt: "Say something about the video (optional)",
+    captionYtPh: "e.g. Here's my track on YouTube, visuals made in Alter",
+    captionClip: "Say something about the clip (optional)",
+    captionClipPh: "e.g. A preview of my new video, not on YouTube yet",
+    captionLink: "Say something about the link (optional)",
+    captionLinkPh: "e.g. Full release on Spotify",
     publish: "Publish",
     save: "Save",
     cancel: "Cancel",
@@ -136,6 +142,12 @@ const TEXT = {
     replaceClip: "Vymeniť",
     linkLabel: "Odkaz na tvoj projekt (nepovinné)",
     linkPlaceholder: "Spotify, SoundCloud, Instagram, tvoj web…",
+    captionYt: "Pár slov k videu (nepovinné)",
+    captionYtPh: "napr. Tu je môj track na YouTube, vizuály robené v Alteri",
+    captionClip: "Pár slov ku klipu (nepovinné)",
+    captionClipPh: "napr. Ukážka z nového videa, ešte nie je na YouTube",
+    captionLink: "Pár slov k odkazu (nepovinné)",
+    captionLinkPh: "napr. Celý release na Spotify",
     publish: "Zverejniť",
     save: "Uložiť",
     cancel: "Zrušiť",
@@ -377,6 +389,9 @@ const ReviewMedia = ({ review }: { review: Review }) => {
   }
   return (
     <div className="mt-4 space-y-3">
+      {(yt || review.video_path) && review.media_caption && (
+        <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{review.media_caption}</p>
+      )}
       {yt && <YouTubeLite id={yt} />}
       {!yt && review.video_path && (
         <video
@@ -387,6 +402,9 @@ const ReviewMedia = ({ review }: { review: Review }) => {
           preload="metadata"
           className="max-h-[420px] w-full rounded-lg border border-border/50 bg-black"
         />
+      )}
+      {review.project_url && review.link_caption && (
+        <p className="break-words text-sm text-muted-foreground">{review.link_caption}</p>
       )}
       {review.project_url && (
         <a
@@ -423,6 +441,8 @@ const ReviewForm = ({ existing, onDone }: { existing?: Review; onDone: () => voi
   );
   const [yt, setYt] = useState(existing?.youtube_url ?? "");
   const [link, setLink] = useState(existing?.project_url ?? "");
+  const [mediaCaption, setMediaCaption] = useState(existing?.media_caption ?? "");
+  const [linkCaption, setLinkCaption] = useState(existing?.link_caption ?? "");
   const [clip, setClip] = useState<File | null>(null);
   const [clipError, setClipError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -471,7 +491,15 @@ const ReviewForm = ({ existing, onDone }: { existing?: Review; onDone: () => voi
       }
       await save.mutateAsync({
         id: existing?.id,
-        input: { rating, body: body.trim(), youtube_url, project_url, video_path },
+        input: {
+          rating,
+          body: body.trim(),
+          youtube_url,
+          project_url,
+          video_path,
+          media_caption: mode !== "none" ? mediaCaption.trim() || null : null,
+          link_caption: project_url ? linkCaption.trim() || null : null,
+        },
       });
       // starý súbor už nepotrebujeme
       if (existing?.video_path && existing.video_path !== video_path) {
@@ -556,6 +584,19 @@ const ReviewForm = ({ existing, onDone }: { existing?: Review; onDone: () => voi
           </div>
         )}
 
+        {mode !== "none" && (
+          <label className="mt-3 block text-xs font-medium text-muted-foreground">
+            {mode === "youtube" ? tx.captionYt : tx.captionClip}
+            <Input
+              className="mt-1.5"
+              maxLength={200}
+              value={mediaCaption}
+              onChange={(e) => setMediaCaption(e.target.value)}
+              placeholder={mode === "youtube" ? tx.captionYtPh : tx.captionClipPh}
+            />
+          </label>
+        )}
+
         <label className="mt-4 block text-xs font-medium text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Link2 className="h-3.5 w-3.5" />
@@ -568,6 +609,18 @@ const ReviewForm = ({ existing, onDone }: { existing?: Review; onDone: () => voi
             placeholder={tx.linkPlaceholder}
           />
         </label>
+        {link.trim() && (
+          <label className="mt-3 block text-xs font-medium text-muted-foreground">
+            {tx.captionLink}
+            <Input
+              className="mt-1.5"
+              maxLength={200}
+              value={linkCaption}
+              onChange={(e) => setLinkCaption(e.target.value)}
+              placeholder={tx.captionLinkPh}
+            />
+          </label>
+        )}
       </div>
 
       <div className="mt-5 flex justify-end gap-2">

@@ -13,7 +13,8 @@
 --     a sama sa aktualizuje, keď si človek licenciu zmení (napr. Demo → Pro)
 --   • autor môže svoju recenziu / komentár upraviť alebo zmazať
 --   • admin (profiles.is_admin) môže zmazať čokoľvek
---   • video: max 20 MB, mp4/webm/mov (dĺžku max 10 s kontroluje web)
+--   • video: max 30 MB, mp4/webm/mov (dĺžku max 10 s kontroluje web)
+--   • k videu aj k odkazu môže autor pripísať krátky popis (1 riadok)
 -- ============================================================
 
 -- ---------- 1. Kto smie písať recenziu ----------
@@ -78,6 +79,13 @@ create table if not exists public.reviews (
   updated_at      timestamptz not null default now(),
   unique (product, user_id)
 );
+-- krátky popis k videu / k odkazu (napr. "toto je môj klip, ešte nie je na YouTube")
+alter table public.reviews add column if not exists media_caption text;
+alter table public.reviews add column if not exists link_caption  text;
+alter table public.reviews drop constraint if exists reviews_media_caption_len;
+alter table public.reviews add  constraint reviews_media_caption_len check (media_caption is null or char_length(media_caption) <= 200);
+alter table public.reviews drop constraint if exists reviews_link_caption_len;
+alter table public.reviews add  constraint reviews_link_caption_len  check (link_caption  is null or char_length(link_caption)  <= 200);
 create index if not exists reviews_product_created_idx on public.reviews (product, created_at desc);
 
 create table if not exists public.review_comments (
@@ -125,7 +133,9 @@ begin
     if new.rating is distinct from old.rating or new.body is distinct from old.body
        or new.youtube_url is distinct from old.youtube_url
        or new.project_url is distinct from old.project_url
-       or new.video_path is distinct from old.video_path then
+       or new.video_path is distinct from old.video_path
+       or new.media_caption is distinct from old.media_caption
+       or new.link_caption is distinct from old.link_caption then
       new.edited := true;
       v_name := public.review_display_name(new.user_id);
       if v_name is null then raise exception 'name_required'; end if;
@@ -315,9 +325,9 @@ create policy "review likes delete own" on public.review_likes for delete
 
 -- Stĺpce, ktoré smie používateľ meniť (počítadlá, meno a autor sú zamknuté).
 revoke insert, update on public.reviews from anon, authenticated;
-grant  insert (product, user_id, rating, body, youtube_url, project_url, video_path)
+grant  insert (product, user_id, rating, body, youtube_url, project_url, video_path, media_caption, link_caption)
   on public.reviews to authenticated;
-grant  update (rating, body, youtube_url, project_url, video_path)
+grant  update (rating, body, youtube_url, project_url, video_path, media_caption, link_caption)
   on public.reviews to authenticated;
 grant  select on public.reviews to anon, authenticated;
 grant  delete on public.reviews to authenticated;
@@ -335,7 +345,7 @@ grant execute on function public.can_review(uuid) to anon, authenticated;
 
 -- ---------- 5. Úložisko na krátke videá ----------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('review-videos', 'review-videos', true, 20971520,
+values ('review-videos', 'review-videos', true, 31457280,
         array['video/mp4', 'video/webm', 'video/quicktime'])
 on conflict (id) do update
   set public = excluded.public,
