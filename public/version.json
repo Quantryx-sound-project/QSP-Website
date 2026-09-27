@@ -9,15 +9,15 @@
     "url": "https://quantryxstudio.com/dashboard#licenses",
     "pro": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Pro-Windows.exe",
-      "sha256": ""
+      "sha256": "1d3f45fa870bb14c0222a5db14ea7c6951bcbb541719ba54e7aae671703750b9"
     },
     "creator": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Creator-Windows.exe",
-      "sha256": ""
+      "sha256": "8798641297ec48465c6e9b6e30eb1faeb4f907780f4b72fd0454164054f09a12"
     },
     "listener": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Listener-Windows.exe",
-      "sha256": ""
+      "sha256": "daba1aab0dae8756dae4c6cbfee454cbd35e46978870164c51fd38340e638d18"
     }
   },
   "macos": {
