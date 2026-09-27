@@ -4,21 +4,22 @@
   "released": "2026-09-28",
   "mandatory": false,
   "min_supported": "0.0.0",
-  "notes": "Nová verzia: každá licencia má vlastný plugin (Pro → AlterPro, Creator → AlterCreator, Listener/Demo → AlterListener). Inštalácia automaticky odstráni staré pluginy.",
+  "notes": "New: each license now has its own plug-in (Pro → AlterPro, Creator → AlterCreator, Listener/Demo → AlterListener). The installer removes old Alter plug-ins automatically.",
   "windows": {
-    "url": "https://quantryxstudio.com/dashboard#licenses",
+    "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Windows.exe",
     "pro": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Pro-Windows.exe",
-      "sha256": "1d3f45fa870bb14c0222a5db14ea7c6951bcbb541719ba54e7aae671703750b9"
+      "sha256": "108b76710aba7711cd3716bee61e684bf3150e1e49ccb09a1030e0479c02054f"
     },
     "creator": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Creator-Windows.exe",
-      "sha256": "8798641297ec48465c6e9b6e30eb1faeb4f907780f4b72fd0454164054f09a12"
+      "sha256": "96436bf96a5340d6e93d567634d8c4683ad186b2cf2ec004fa23cc24460b39d3"
     },
     "listener": {
       "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Listener-Windows.exe",
-      "sha256": "daba1aab0dae8756dae4c6cbfee454cbd35e46978870164c51fd38340e638d18"
-    }
+      "sha256": "005081b2a18933cc672944ae0f4fd53850e2b358752650f29ee990ac340916d7"
+    },
+    "sha256": "af6fcadebe253a2376dca2ecf8cf2c9729d0ce6789dac769d2acbafc9bfc8bb6"
   },
   "macos": {
     "url": "https://quantryxstudio.com/dashboard#licenses",
