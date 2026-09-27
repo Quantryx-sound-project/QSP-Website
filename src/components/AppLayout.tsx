@@ -45,7 +45,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           aria-label="Quantryx Sound Project"
         >
-          <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-12 w-auto" />
+          <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-14 w-auto" />
         </Link>
       </header>
 

@@ -27,12 +27,12 @@ const Quantryx = () => {
     {
       name: "Alter",
       icon: Waves,
-      href: "#waitlist",
+      href: "/pricing",
       status: t("landing.statusActive"),
       tagline: t("landing.alterTagline"),
       price: `${t("landing.from")} ${planById.listener.price}`,
-      cta: "Join waitlist",
-      internal: false,
+      cta: "See pricing",
+      internal: true,
     },
     {
       name: "Book a design",
@@ -66,7 +66,7 @@ const Quantryx = () => {
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             aria-label="Quantryx Sound Project"
           >
-            <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-12 w-auto" />
+            <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-14 w-auto" />
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher className="hidden sm:inline-flex" />

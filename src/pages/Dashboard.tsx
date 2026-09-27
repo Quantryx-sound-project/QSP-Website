@@ -33,7 +33,7 @@ import AppLayout from "@/components/AppLayout";
 import { useT } from "@/lib/i18n";
 import { formatEur } from "@/lib/pricing";
 import RefundFlow from "@/components/RefundFlow";
-import { installerUrl, installerUrlMac } from "@/lib/earlyAccess";
+import { installerFor, editionForPlan } from "@/lib/earlyAccess";
 import { supabaseConfigured } from "@/integrations/supabase/client";
 import {
   useProfile,
@@ -185,8 +185,9 @@ const Dashboard = () => {
 
   // Reálne stiahnutie inštalačky. Prístup má každý s aktívnou licenciou
   // (prešiel platobnou bránou) — appka aj tak dá tier podľa prihlásenia.
-  const handleDownload = (platform: "windows" | "macos") => {
-    const url = platform === "windows" ? installerUrl : installerUrlMac;
+  // Každá licencia má vlastnú inštalačku (appka + plugin svojej edície).
+  const handleDownload = (platform: "windows" | "macos", plan: string) => {
+    const url = installerFor(editionForPlan(plan), platform);
     const a = document.createElement("a");
     a.href = url;
     a.download = "";
@@ -625,7 +626,7 @@ const Dashboard = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDownload("windows")}
+                                  onClick={() => handleDownload("windows", lic.plan)}
                                 >
                                   <Monitor className="mr-2 h-4 w-4" />
                                   Windows
@@ -633,7 +634,7 @@ const Dashboard = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDownload("macos")}
+                                  onClick={() => handleDownload("macos", lic.plan)}
                                 >
                                   <Apple className="mr-2 h-4 w-4" />
                                   macOS
