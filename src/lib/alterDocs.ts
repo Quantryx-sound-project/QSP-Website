@@ -22,6 +22,9 @@ import tone2 from "@/assets/modules/tone-analyzer-2.png";
 import chladni1 from "@/assets/modules/chladni-1.png";
 import chladni2 from "@/assets/modules/chladni-2.png";
 import chladni3 from "@/assets/modules/chladni-3.png";
+import chladniReal1 from "@/assets/modules/chladni-real-1.png";
+import chladniReal3 from "@/assets/modules/chladni-real-3.png";
+import chladniReal4 from "@/assets/modules/chladni-real-4.png";
 import geometry1 from "@/assets/modules/geometry-1.png";
 import geometry2 from "@/assets/modules/geometry-2.png";
 import synesthesia1 from "@/assets/modules/synesthesia-1.png";
@@ -63,7 +66,7 @@ export const fullDocsZipPath = "/docs/alter/ALTER_Full_Documentation.zip";
 export const dawAutomation = {
   title: "DAW automation (Creator plugin)",
   content: [
-    "Every parameter you see in a module's controller also lives in the Creator VST plugin — Geometry, Synesthesia and Chladni included. Drop the plugin on a track in Ableton (or any DAW), hit Configure, and it exposes those parameters straight into the track, so you can automate them by hand on the timeline: draw Geometry's Complexity rising into a drop, ride Synesthesia's Bloom, morph Chladni's Shift across a breakdown.",
+    "Every parameter you see in a module's controller also lives in the Creator VST plugin — Geometry, Synesthesia and Chladni included. Drop the plugin on a track in Ableton (or any DAW), hit Configure, and it exposes those parameters straight into the track, so you can automate them by hand on the timeline: draw Geometry's Complexity rising into a drop, ride Synesthesia's Bloom, morph Chladni's Shift across a breakdown. (Chladni's newer Real life mode, drive and render controls are controller-only for now.)",
     "One thing to know so it doesn't surprise you: when automation is running from the plugin and you also grab a knob in the original controller, the app stores that only as a temporary state. The moment playback passes that point again, the automation writes its value back and overrides your manual change. So you can absolutely tweak by hand alongside automation — it just stays live only until it gets overwritten from the other side. Automation is the source of truth; manual moves are temporary until the playhead rewrites them.",
   ],
 };
@@ -175,17 +178,22 @@ export const alterModules: AlterModuleDoc[] = [
   {
     slug: "chladni-patterns",
     title: "Chladni Patterns",
-    summary: "Sound organising into plate figures — and how close to real plate physics it actually is.",
+    summary: "Sound organising into plate figures — a classic formula mode, and a real plate you tune by hand to hunt for patterns.",
     category: "creative",
     availableIn: ["creator", "pro"],
     images: [
       { src: chladni1, caption: "Mode (4,6)" },
       { src: chladni2, caption: "Mode (2,3)" },
       { src: chladni3, caption: "Mode (7,9)" },
+      { src: chladniReal1, caption: "Real life mode — 887.8 Hz, Sand" },
+      { src: chladniReal3, caption: "Real life mode — 464.9 Hz, Glow" },
+      { src: chladniReal4, caption: "Real life mode — Contours" },
     ],
     content: [
-      "Chladni Patterns turns resonance into the sand-on-a-vibrating-plate figures from the real experiment. It runs a rectangular plate modal field where each pattern is two mode indices, m and n: small numbers give broad, readable figures, large numbers give fine, dense geometry. The audio does not map bass to one axis and treble to another — ALTER takes the dominant, ear-weighted frequency and picks the whole (m,n) mode closest to it, so the sound grabs the entire plate shape. Loudness only shakes the sand harder; the tone chooses the figure. Change Material or Aspect Ratio and the same note can settle into a different figure, exactly like a real surface would.",
-      "How physically accurate is it, honestly: it's a real-time artistic plate model, not a million-element laboratory simulation. The nodal geometry follows genuine plate-vibration theory — standing-wave modes, nodal lines where the sand settles — and the audio-to-mode map is a fixed reference table you can read in the documentation. But it's tuned to look alive and react musically at 60 fps, not to be calibrated against a specific manufactured steel plate. It's physically inspired and correct in shape and behaviour; it is not a promise of lab measurement. Treat it as a demonstrator of resonance, not a metrology instrument — pitch chooses the geometry, loudness shakes the sand.",
+      "Chladni Patterns turns resonance into the sand-on-a-vibrating-plate figures from the real experiment. In the classic mode it runs a rectangular plate modal field where each pattern is two mode indices, m and n: small numbers give broad, readable figures, large numbers give fine, dense geometry. The audio does not map bass to one axis and treble to another — ALTER takes the dominant, ear-weighted frequency and picks the whole (m,n) mode closest to it, so the sound grabs the entire plate shape. Loudness only shakes the sand harder; the tone chooses the figure. Change Material or Aspect Ratio and the same note can settle into a different figure, exactly like a real surface would.",
+      "Real life mode switches the formula off and puts a physically modelled plate on the table: a free square plate with around 390 numerically solved vibration modes (Rayleigh–Ritz, the method Ritz used on Chladni's own plates in 1909). One frequency drives it at one point — centre bolt, off-centre, edge like a violin bow, or corner — and every mode answers. Exactly like on the real plate, only a resonance draws a clean figure; a few cents off it bends, and between resonances you get mixtures, smears or two stray lines. Finding the good frequencies is the game: drive it from the audio, tune a virtual tone generator with Frequency and Fine and jump between resonances with the < / > buttons, or let Sweep hunt on its own and pause on every figure. The plate is always computed as a square and simply stretched to the module's shape.",
+      "How it's drawn is separate from how it behaves. Render picks Sand (grains on the nodal lines), Lines (the nodal set as one continuous stroke), Glow (long exposure, grains leave light trails) or Contours (animated iso-lines of the plate's displacement — you watch it breathe). Grain size sets grain diameter or line width, Brightness lifts the figure for projectors and quiet passages. The full resonance lists for every material and drive point are in the documentation download.",
+      "How physically accurate is it, honestly: the classic mode is a real-time artistic plate model — genuine standing-wave geometry, but frequencies from a simplified formula and a fixed reference table you can read in the documentation. Real life mode is a genuine thin-plate model whose lowest frequencies match published values for a free square plate, and the figures it draws are the ones the real experiment produces. What neither knows is your specific manufactured plate: its thickness tolerance, the shaker bolt, the air. Treat it as a demonstrator of resonance, not a metrology instrument — pitch chooses the geometry, loudness shakes the sand.",
     ],
   },
   {

@@ -47,3 +47,5 @@ vite.config.ts.timestamp-*.mjs
 
 # session backups
 *.bak-pred-login
+
+_to_delete/
