@@ -225,8 +225,8 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
   return (
     <div className="flex h-full flex-col">
       {!compact && (
-        <Link to="/" className="flex items-center justify-center px-6 py-5 border-b border-primary/20">
-          <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-20 w-auto" />
+        <Link to="/" className="flex items-center gap-2 px-6 py-5 border-b border-primary/20">
+          <img src="/logo-wordmark.svg" alt="Quantryx Sound Project" className="h-8 w-auto" />
         </Link>
       )}
 

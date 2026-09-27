@@ -17,7 +17,7 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-3">
           <div>
             <Link to="/" className="flex items-center gap-2 mb-3">
-              <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-20 w-auto" />
+              <img src="/logo-wordmark.svg" alt="Quantryx Sound Project" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
               {t("footer.tagline")}

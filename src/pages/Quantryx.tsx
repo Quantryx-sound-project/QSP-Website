@@ -59,10 +59,15 @@ const Quantryx = () => {
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/logo-wordmark.svg" alt="Quantryx Sound Project" className="h-8 w-auto" />
-            </Link>
           </div>
+          {/* Logo presne v strede hornej lišty. */}
+          <Link
+            to="/"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            aria-label="Quantryx Sound Project"
+          >
+            <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-12 w-auto" />
+          </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher className="hidden sm:inline-flex" />
             <Link to="/login">

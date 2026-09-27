@@ -36,15 +36,17 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link to="/" onClick={closeOnMobile} className="flex min-w-0 items-center gap-2">
-              <img
-                src="/logo-wordmark.svg"
-                alt="Quantryx Sound Project"
-                className="h-7 sm:h-8 w-auto max-w-[52vw] sm:max-w-none object-contain object-left"
-              />
-            </Link>
           </div>
         </div>
+        {/* Logo presne v strede hornej lišty (nezávisle od tlačidiel vľavo/vpravo). */}
+        <Link
+          to="/"
+          onClick={closeOnMobile}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          aria-label="Quantryx Sound Project"
+        >
+          <img src="/logo-quantryx.svg" alt="Quantryx Sound Project" className="h-12 w-auto" />
+        </Link>
       </header>
 
       {/* Stmavené pozadie na mobile – kliknutie mimo menu ho zavrie. */}
