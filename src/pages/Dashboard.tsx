@@ -838,7 +838,7 @@ const Dashboard = () => {
                               }
                             >
                               {o.status === "paid"
-                                ? t("account.statusActive")
+                                ? t("account.orderPaid")
                                 : t("account.statusRefunded")}
                             </Badge>
                             {o.invoice_url && (
