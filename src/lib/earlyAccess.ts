@@ -7,12 +7,12 @@
 // napr. "/downloads/alter-earlyaccess-setup.exe".
 // Windows inštalačka z GitHub Releases (public repo alter-releases).
 // Pri každom novom builde sem daj nový tag/verziu (alebo použi .../releases/latest/download/...).
-export const installerUrl = "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.1/Alter-0.0.1-Windows.exe";
+   export const installerUrl = "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.3/Alter-0.0.3-Windows.exe";
 
 // ---- Od 0.0.2: jeden inštalátor NA EDÍCIU (appka + jeden plugin) -----------
 // Pri novom vydaní zmeň len releaseVersion (musí sedieť s tagom na GitHube
 // a s kAppVersion v Alter/Source/AlterVersion.h).
-export const releaseVersion = "0.0.2";
+export const releaseVersion = "0.0.3";
 export type Edition = "Pro" | "Creator" | "Listener";
 
 /** Ktorá inštalačka patrí k licencii: pro->Pro, creator->Creator, listener/demo->Listener. */
