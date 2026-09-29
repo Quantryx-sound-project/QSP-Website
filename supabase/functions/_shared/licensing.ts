@@ -28,11 +28,6 @@ addVariant("2183586", "demo");
 addVariant("2183587", "listener");
 addVariant("2183588", "creator");
 addVariant("2183589", "pro");
-// TEST mode (staré ID – nechané kvôli starým testovacím objednávkam)
-addVariant("2155356", "demo");
-addVariant("2155812", "listener");
-addVariant("2155819", "creator");
-addVariant("2155829", "pro");
 // Voliteľne ďalšie ID cez secrets (napr. Live mode má iné ID). Hodnota môže
 // obsahovať viac ID oddelených čiarkou.
 for (const plan of ["demo", "listener", "creator", "pro"] as Plan[]) {
