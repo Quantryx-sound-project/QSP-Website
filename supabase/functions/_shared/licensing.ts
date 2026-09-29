@@ -23,6 +23,12 @@ const addVariant = (id: string | undefined | null, plan: Plan) => {
   if (v) VARIANT_TO_PLAN[v] = plan;
 };
 // Známe variant ID (rovnaké ako ?enabled=… v src/lib/lemonSqueezy.ts)
+// LIVE mode (produkt "Alter", 4 varianty)
+addVariant("2183586", "demo");
+addVariant("2183587", "listener");
+addVariant("2183588", "creator");
+addVariant("2183589", "pro");
+// TEST mode (staré ID – nechané kvôli starým testovacím objednávkam)
 addVariant("2155356", "demo");
 addVariant("2155812", "listener");
 addVariant("2155819", "creator");
