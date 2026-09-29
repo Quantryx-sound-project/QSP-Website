@@ -41,6 +41,7 @@ import {
   useOrders,
   useSyncLicenses,
   useDeactivateLicense,
+  useReactivateLicense,
   useRefundRequests,
   useCancelRefund,
   type RefundRequest,
@@ -65,6 +66,7 @@ const Dashboard = () => {
   const ordersQ = useOrders();
   const syncLicenses = useSyncLicenses();
   const deactivateLicense = useDeactivateLicense();
+  const reactivateLicense = useReactivateLicense();
 
   // ---- 30-dňová garancia vrátenia peňazí ----
   const refundsQ = useRefundRequests();
@@ -72,7 +74,8 @@ const Dashboard = () => {
   const [refundOpenId, setRefundOpenId] = useState<string | null>(null);
   const refundByLicense = useMemo(() => {
     const m = new Map<string, RefundRequest>();
-    for (const r of refundsQ.data ?? []) if (!m.has(r.license_id)) m.set(r.license_id, r);
+    for (const r of refundsQ.data ?? [])
+      if (r.license_id && !m.has(r.license_id)) m.set(r.license_id, r);
     return m;
   }, [refundsQ.data]);
   const REFUND_DAYS = 30;
@@ -119,6 +122,21 @@ const Dashboard = () => {
         toast.error(t("account.deactivateErr"), { description: describeSupabaseError(e) }),
     });
   };
+  const doReactivate = (lic: License) => {
+    reactivateLicense.mutate(lic.id, {
+      onSuccess: () => toast.success(t("account.reactivated"), { description: licenseName(lic) }),
+      onError: (e) =>
+        toast.error(t("account.reactivateErr"), { description: describeSupabaseError(e) }),
+    });
+  };
+  // refundy, ktorých licencia už bola zmazaná (zobrazíme ich 14 dní)
+  const recentRefunds = (refundsQ.data ?? []).filter(
+    (r) =>
+      r.status === "refunded" &&
+      !r.license_id &&
+      r.resolved_at &&
+      Date.now() - new Date(r.resolved_at).getTime() < 14 * 86400000,
+  );
   const initialLicenseIds = useRef<Set<string> | null>(null);
   const updateProfile = useUpdateProfile();
 
@@ -550,6 +568,14 @@ const Dashboard = () => {
                       {t("account.syncLicenses")}
                     </Button>
                   </div>
+                  {recentRefunds.map((r) => (
+                    <div key={r.id} className="mb-4 rounded-md border border-border/40 p-3 text-xs">
+                      <p className="font-medium">
+                        {R.refunded} · Alter {t(`plans.${r.plan}Name`)}
+                      </p>
+                      <p className="mt-1 text-muted-foreground">{R.refundedSub}</p>
+                    </div>
+                  ))}
                   {licenses.length === 0 ? (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <p className="text-muted-foreground">{t("account.licensesEmpty")}</p>
@@ -744,6 +770,22 @@ const Dashboard = () => {
                                     {t("account.deactivate")}
                                   </button>
                                 )}
+                              </div>
+                            )}
+
+                            {lic.status === "deactivated" && (
+                              <div className="mt-3 border-t border-border/30 pt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={reactivateLicense.isPending}
+                                  onClick={() => doReactivate(lic)}
+                                >
+                                  {reactivateLicense.isPending && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  )}
+                                  {t("account.reactivate")}
+                                </Button>
                               </div>
                             )}
                           </div>

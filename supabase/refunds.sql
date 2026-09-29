@@ -5,7 +5,8 @@
 -- Tok:
 --   1. Zákazník v profile vyplní žiadosť  → request_refund()        (status 'pending')
 --   2. Admin v /admin žiadosť schváli     → edge funkcia refund-approve
---      (vráti peniaze cez Lemon Squeezy API, licencia → 'refunded')
+--      (vráti peniaze cez Lemon Squeezy API, licencia sa NATRVALO ZMAŽE;
+--       žiadosť + objednávka ostanú ako história a pre štatistiku refundov)
 --      alebo zamietne                    → admin_reject_refund()   (status 'rejected')
 --   Zákazník môže čakajúcu žiadosť stiahnuť → cancel_refund_request()
 -- ============================================================
@@ -34,7 +35,7 @@ alter table public.licenses add column if not exists deactivated_at timestamptz;
 create table if not exists public.refund_requests (
   id                 uuid primary key default gen_random_uuid(),
   user_id            uuid not null references auth.users (id) on delete cascade,
-  license_id         uuid not null references public.licenses (id) on delete cascade,
+  license_id         uuid references public.licenses (id) on delete set null,
   ls_order_id        text not null,
   plan               text not null,
   amount             numeric(10,2),
@@ -49,6 +50,29 @@ create table if not exists public.refund_requests (
   created_at         timestamptz not null default now(),
   resolved_at        timestamptz
 );
+-- 1b) úprava pre existujúcu tabuľku: po refunde sa licencia maže, žiadosť ostáva
+alter table public.refund_requests alter column license_id drop not null;
+alter table public.refund_requests add column if not exists purchased_at timestamptz;
+do $$
+declare c record;
+begin
+  for c in
+    select con.conname from pg_constraint con
+    where con.conrelid = 'public.refund_requests'::regclass
+      and con.contype = 'f'
+      and con.confrelid = 'public.licenses'::regclass
+  loop
+    execute format('alter table public.refund_requests drop constraint %I', c.conname);
+  end loop;
+end $$;
+alter table public.refund_requests
+  add constraint refund_requests_license_id_fkey
+  foreign key (license_id) references public.licenses (id) on delete set null;
+update public.refund_requests r
+   set purchased_at = l.purchased_at
+  from public.licenses l
+ where l.id = r.license_id and r.purchased_at is null;
+
 create index if not exists refund_requests_user_idx on public.refund_requests (user_id);
 create index if not exists refund_requests_status_idx on public.refund_requests (status);
 
@@ -101,10 +125,10 @@ begin
   if coalesce(length(trim(p_details)), 0) < 50 then raise exception 'details_too_short'; end if;
 
   insert into public.refund_requests
-    (user_id, license_id, ls_order_id, plan, amount, currency,
+    (user_id, license_id, ls_order_id, plan, amount, currency, purchased_at,
      reason, details, system_info, contacted_support)
   values
-    (auth.uid(), l.id, l.ls_order_id, l.plan, l.price_paid, l.currency,
+    (auth.uid(), l.id, l.ls_order_id, l.plan, l.price_paid, l.currency, l.purchased_at,
      trim(p_reason), trim(p_details), nullif(trim(coalesce(p_system_info, '')), ''),
      coalesce(p_contacted_support, false))
   returning id into new_id;
@@ -147,7 +171,7 @@ begin
     select r.id, u.email::text, r.plan, r.amount, r.currency,
            r.reason, r.details, r.system_info, r.contacted_support,
            r.status, r.admin_note, r.created_at, r.resolved_at,
-           l.purchased_at, r.ls_order_id
+           coalesce(r.purchased_at, l.purchased_at), r.ls_order_id
       from public.refund_requests r
       join auth.users u on u.id = r.user_id
       left join public.licenses l on l.id = r.license_id
@@ -172,11 +196,48 @@ begin
 end;
 $$;
 
+-- 6) admin: štatistika refundov (z objednávok → zaráta aj refundy spravené
+--    priamo v Lemon Squeezy dashboarde, nielen cez /admin)
+create or replace function public.admin_refund_stats()
+returns table (
+  refunds_total   bigint,
+  refunded_amount numeric,
+  paid_orders     bigint,
+  refunds_30d     bigint,
+  by_plan         jsonb
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  return query
+    select
+      count(*) filter (where o.status = 'refunded'),
+      coalesce(sum(o.total) filter (where o.status = 'refunded'), 0),
+      count(*) filter (where o.status in ('paid', 'refunded') and o.total > 0),
+      count(*) filter (where o.status = 'refunded' and o.ordered_at > now() - interval '30 days'),
+      coalesce(
+        (select jsonb_object_agg(x.plan, x.n)
+           from (select o2.plan, count(*) as n from public.orders o2
+                  where o2.status = 'refunded' group by o2.plan) x),
+        '{}'::jsonb)
+    from public.orders o;
+end;
+$$;
+
+-- 7) upratanie: licencie, ktoré už boli refundované predtým, zmažeme
+delete from public.licenses where status = 'refunded';
+
 revoke all on function public.request_refund(uuid, text, text, text, boolean) from public, anon;
 revoke all on function public.cancel_refund_request(uuid) from public, anon;
 revoke all on function public.admin_refund_requests() from public, anon;
 revoke all on function public.admin_reject_refund(uuid, text) from public, anon;
+revoke all on function public.admin_refund_stats() from public, anon;
 grant execute on function public.request_refund(uuid, text, text, text, boolean) to authenticated;
 grant execute on function public.cancel_refund_request(uuid) to authenticated;
 grant execute on function public.admin_refund_requests() to authenticated;
 grant execute on function public.admin_reject_refund(uuid, text) to authenticated;
+grant execute on function public.admin_refund_stats() to authenticated;

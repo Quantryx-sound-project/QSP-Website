@@ -4,7 +4,7 @@
 // Admin v /admin klikne "Schváliť a vrátiť peniaze". Funkcia:
 //   1. overí, že volajúci je admin (profiles.is_admin),
 //   2. cez Lemon Squeezy API vráti celú sumu objednávky,
-//   3. žiadosť → 'refunded', licencia → 'refunded', objednávka → 'refunded'.
+//   3. žiadosť → 'refunded', objednávka → 'refunded', licencia sa NATRVALO ZMAŽE.
 //   (Lemon Squeezy potom pošle aj webhook order_refunded — ten spraví to isté.)
 //
 // Nasadenie:  npx supabase functions deploy refund-approve --project-ref rocsxttousdashuavfut
@@ -88,8 +88,10 @@ Deno.serve(async (req) => {
     .from("refund_requests")
     .update({ status: "refunded", resolved_at: now, admin_note: note })
     .eq("id", requestId);
-  await admin.from("licenses").update({ status: "refunded" }).eq("id", rr.license_id);
   await admin.from("orders").update({ status: "refunded" }).eq("ls_order_id", rr.ls_order_id);
+  // licencia sa zmaže natrvalo (žiadosť ostane – license_id sa nastaví na null)
+  if (rr.license_id) await admin.from("licenses").delete().eq("id", rr.license_id);
+  await admin.from("licenses").delete().eq("ls_order_id", rr.ls_order_id);
 
   console.log(`[refund-approve] refunded order ${rr.ls_order_id} (request ${requestId})`);
   return json({ ok: true });

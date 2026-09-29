@@ -68,12 +68,23 @@ const AdminRefunds = () => {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [stats, setStats] = useState<{
+    refunds_total: number;
+    refunded_amount: number;
+    paid_orders: number;
+    refunds_30d: number;
+    by_plan: Record<string, number>;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await rpc("admin_refund_requests");
     if (error) console.warn("[admin refunds]", error.message);
     setRows((data as Row[] | null) ?? []);
+    const st = await rpc("admin_refund_stats");
+    if (st.error) console.warn("[admin refund stats]", st.error.message);
+    const first = Array.isArray(st.data) ? st.data[0] : null;
+    setStats(first ? { ...first, by_plan: first.by_plan ?? {} } : null);
     setLoading(false);
   }, []);
 
@@ -94,7 +105,7 @@ const AdminRefunds = () => {
         description: (data as { error?: string })?.error ?? error?.message ?? "",
       });
     } else {
-      toast.success("Peniaze boli vrátené, licencia deaktivovaná");
+      toast.success("Peniaze boli vrátené, licencia zmazaná");
     }
     load();
   };
@@ -120,7 +131,7 @@ const AdminRefunds = () => {
           <div>
             <CardTitle>Žiadosti o refund {pending.length > 0 && `(${pending.length})`}</CardTitle>
             <CardDescription>
-              30-dňová garancia. Schválenie vráti peniaze cez Lemon Squeezy a deaktivuje licenciu.
+              30-dňová garancia. Schválenie vráti peniaze cez Lemon Squeezy a licenciu natrvalo zmaže.
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -134,6 +145,38 @@ const AdminRefunds = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {stats && (
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
+            <div className="rounded-md border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">Refundov spolu</p>
+              <p className="text-lg font-semibold">{stats.refunds_total}</p>
+            </div>
+            <div className="rounded-md border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">Vrátená suma</p>
+              <p className="text-lg font-semibold">{formatEur(Number(stats.refunded_amount))}</p>
+            </div>
+            <div className="rounded-md border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">Refund rate</p>
+              <p className="text-lg font-semibold">
+                {stats.paid_orders > 0
+                  ? `${((stats.refunds_total / stats.paid_orders) * 100).toFixed(1)} %`
+                  : "–"}
+              </p>
+            </div>
+            <div className="rounded-md border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">Za 30 dní</p>
+              <p className="text-lg font-semibold">{stats.refunds_30d}</p>
+            </div>
+            {Object.keys(stats.by_plan).length > 0 && (
+              <p className="col-span-2 sm:col-span-4 text-xs text-muted-foreground">
+                Podľa edície:{" "}
+                {Object.entries(stats.by_plan)
+                  .map(([plan, n]) => `${plan} ${n}×`)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
         {loading && <p className="text-sm text-muted-foreground">Načítavam…</p>}
         {!loading && visible.length === 0 && (
           <p className="text-sm text-muted-foreground">

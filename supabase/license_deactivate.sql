@@ -1,5 +1,6 @@
 -- ============================================================
 -- Deaktivácia licencie používateľom (napr. pred upgradom Demo → Pro)
+-- + opätovná aktivácia deaktivovanej licencie
 -- Spusti CELÉ v Supabase → SQL Editor → Run. Dá sa spustiť aj viackrát.
 -- ============================================================
 
@@ -57,3 +58,35 @@ $$;
 
 revoke all on function public.deactivate_license(uuid) from public, anon;
 grant execute on function public.deactivate_license(uuid) to authenticated;
+
+-- 3) znova aktivovať vlastnú deaktivovanú licenciu (tlačidlo v profile)
+--    Refundované licencie sa mažú, takže tie sa aktivovať nedajú.
+create or replace function public.reactivate_license(p_license_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  l public.licenses;
+begin
+  if auth.uid() is null then
+    raise exception 'not_signed_in';
+  end if;
+
+  select * into l from public.licenses where id = p_license_id for update;
+  if not found or l.user_id <> auth.uid() then
+    raise exception 'license_not_found';
+  end if;
+  if l.status <> 'deactivated' then
+    raise exception 'license_not_deactivated';
+  end if;
+
+  update public.licenses
+     set status = 'active', deactivated_at = null
+   where id = p_license_id;
+end;
+$$;
+
+revoke all on function public.reactivate_license(uuid) from public, anon;
+grant execute on function public.reactivate_license(uuid) to authenticated;

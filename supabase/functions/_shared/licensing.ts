@@ -167,6 +167,13 @@ export async function grantFromOrder(
     return { plan, license: "skipped" };
   }
 
+  // refundovaná objednávka licenciu nemá (a ak ešte existuje, zmaže sa) –
+  // lemon-sync ju tak po refunde už znova nevytvorí
+  if (refunded) {
+    await admin.from("licenses").delete().eq("ls_order_id", orderId);
+    return { plan, license: "skipped" };
+  }
+
   // status sa nastaví LEN pri vytvorení licencie – opakovaný webhook / sync tak
   // NEobnoví licenciu, ktorú používateľ deaktivoval alebo admin zrušil.
   const license = await upsertBy(
@@ -188,14 +195,11 @@ export async function grantFromOrder(
       purchased_at: attr.created_at ?? new Date().toISOString(),
     },
     {
-      status: refunded ? "refunded" : "active",
+      status: "active",
       license_key: makeLicenseKey(),
       activations_used: 0,
       activations_limit: 3,
     },
   );
-  if (refunded) {
-    await admin.from("licenses").update({ status: "refunded" }).eq("ls_order_id", orderId);
-  }
   return { plan, license };
 }

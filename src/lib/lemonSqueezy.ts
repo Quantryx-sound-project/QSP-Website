@@ -8,9 +8,9 @@ export const lemonCheckoutUrls: Record<string, string> = {
   // Demo = dobrovoľný príspevok (PWYW, min 0). Nákup Demo nedá platený tier
   // (webhook ho zapíše ako plan 'demo'), je to len donation.
   demo:     "https://quantryxstudio.lemonsqueezy.com/checkout/buy/bcf31942-fb56-4cb1-ad7b-2f8fb248fbbc?enabled=2183586",
-  listener: "https://quantryxstudio.lemonsqueezy.com/checkout/buy/bcf31942-fb56-4cb1-ad7b-2f8fb248fbbc?enabled=2183587",
-  creator:  "https://quantryxstudio.lemonsqueezy.com/checkout/buy/bcf31942-fb56-4cb1-ad7b-2f8fb248fbbc?enabled=2183588",
-  pro:      "https://quantryxstudio.lemonsqueezy.com/checkout/buy/bcf31942-fb56-4cb1-ad7b-2f8fb248fbbc?enabled=2183589",
+  listener: "https://quantryxstudio.lemonsqueezy.com/checkout/buy/83ad3ba9-9fe4-4d17-a5e5-897432f4ca3e?enabled=2183587",
+  creator:  "https://quantryxstudio.lemonsqueezy.com/checkout/buy/14578a4b-155f-4641-a3a8-60f50a1fc84d?enabled=2183588",
+  pro:      "https://quantryxstudio.lemonsqueezy.com/checkout/buy/8f2d5851-bb03-4285-bb94-ab5d1db1323b?enabled=2183589",
 };
 
 type LemonWindow = Window & {

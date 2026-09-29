@@ -118,11 +118,28 @@ export function useDeactivateLicense() {
   });
 }
 
+// ---- Opätovná aktivácia deaktivovanej licencie -----------------------------
+// Volá SQL funkciu public.reactivate_license (supabase/license_deactivate.sql).
+export function useReactivateLicense() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (licenseId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("reactivate_license", {
+        p_license_id: licenseId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["licenses", user?.id] }),
+  });
+}
+
 // ---- Refund (30-dňová garancia) ---------------------------------------------
 // Tabuľka + funkcie: supabase/refunds.sql
 export type RefundRequest = {
   id: string;
-  license_id: string;
+  license_id: string | null; // null = licencia bola po refunde zmazaná
   plan: string;
   amount: number | null;
   currency: string | null;

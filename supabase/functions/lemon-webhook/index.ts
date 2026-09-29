@@ -129,7 +129,8 @@ Deno.serve(async (req) => {
       case "order_refunded": {
         const orderId = String(payload.data.id);
         await admin.from("orders").update({ status: "refunded" }).eq("ls_order_id", orderId);
-        await admin.from("licenses").update({ status: "refunded" }).eq("ls_order_id", orderId);
+        // refundovaná licencia sa natrvalo zmaže (objednávka ostane pre štatistiku)
+        await admin.from("licenses").delete().eq("ls_order_id", orderId);
         break;
       }
 
