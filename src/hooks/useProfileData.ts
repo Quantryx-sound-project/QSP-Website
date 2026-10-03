@@ -259,8 +259,8 @@ export function useOrders() {
 }
 
 // ---- Nárok na demo licenciu (zadarmo, len pre prihláseného) ---------------
-// Idempotentné: ak už demo licenciu má, len ju vráti. Zápis povoľuje RLS
-// politika „Users can self-grant demo license" (plan = 'demo').
+// Idempotentné: ak už demo licenciu má, nič nerobí. Licenciu vytvorí
+// serverová funkcia claim_demo_license() (supabase/security_fix_2026-10.sql).
 export function useClaimDemo() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -277,16 +277,12 @@ export function useClaimDemo() {
       if (selErr) throw selErr;
       if (existing) return; // demo už vlastní
 
-      const { error } = await supabase.from("licenses").insert({
-        user_id: user.id,
-        plan: "demo",
-        status: "active",
-        period_type: "free",
-        activations_limit: 1,
-      });
+      // Demo licenciu vytvára server (claim_demo_license v security_fix_2026-10.sql)
+      // — prehliadač už nesmie sám zapisovať do tabuľky licenses.
+      const { error } = await looseDb.rpc("claim_demo_license");
       if (error) {
         // eslint-disable-next-line no-console
-        console.error("[claimDemo] insert failed:", describeSupabaseError(error));
+        console.error("[claimDemo] claim failed:", describeSupabaseError(error));
         throw error;
       }
     },

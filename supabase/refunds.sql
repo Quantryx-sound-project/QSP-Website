@@ -109,6 +109,13 @@ begin
   if l.period_type <> 'oneTime' or l.ls_order_id is null or coalesce(l.price_paid, 0) <= 0 then
     raise exception 'not_refundable';
   end if;
+  -- demo sa nerefunduje; objednávka musí patriť tomuto používateľovi a byť zaplatená
+  if l.plan = 'demo' or not exists (
+       select 1 from public.orders o
+        where o.ls_order_id = l.ls_order_id and o.user_id = auth.uid()
+          and o.status = 'paid' and o.total > 0) then
+    raise exception 'not_refundable';
+  end if;
   if l.purchased_at < now() - interval '30 days' then
     raise exception 'guarantee_expired';
   end if;

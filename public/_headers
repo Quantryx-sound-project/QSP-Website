@@ -1,0 +1,20 @@
+# ============================================================
+# Bezpečnostné HTTP hlavičky pre Cloudflare Pages.
+# (netlify.toml Cloudflare IGNORUJE — platí len tento súbor.)
+#
+# CSP je zatiaľ v režime REPORT-ONLY: nič neblokuje, len v konzole
+# prehliadača (F12 → Console) vypíše, čo by zablokovala.
+# Keď týždeň nebudú v konzole žiadne "Content-Security-Policy" hlášky,
+# premenuj "Content-Security-Policy-Report-Only" na "Content-Security-Policy".
+# ============================================================
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://assets.lemonsqueezy.com https://static.cloudflareinsights.com https://cdnjs.buymeacoffee.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lemonsqueezy.com https://cloudflareinsights.com; frame-src https://*.lemonsqueezy.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://*.lemonsqueezy.com
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

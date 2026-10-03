@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
 
   if (!API_KEY) return json({ ok: false, reason: "LEMON_API_KEY not set" });
   if (!email) return json({ ok: false, reason: "user has no email" });
+  // BEZPEČNOSŤ: objednávky sa párujú podľa e-mailu, takže e-mail musí byť overený
+  if (!user.email_confirmed_at) return json({ ok: false, reason: "email_not_confirmed" }, 403);
 
   const results: unknown[] = [];
   const errors: string[] = [];

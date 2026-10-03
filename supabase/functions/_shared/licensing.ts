@@ -104,13 +104,15 @@ export async function findUserIdByEmail(
 ): Promise<string | null> {
   const e = (email ?? "").trim().toLowerCase();
   if (!e) return null;
-  const { data } = await admin.from("profiles").select("id").ilike("email", e).limit(1);
-  if (data && data.length > 0) return data[0].id as string;
-  // záloha: auth.users (profil nemusí mať email vyplnený)
+  // BEZPEČNOSŤ: hľadáme LEN v auth.users a LEN overený e-mail.
+  // (profiles.email si kedysi vedel prepísať ktokoľvek a ilike bral "_" ako
+  //  zástupný znak — preto sa podľa profiles už nepáruje.)
   for (let page = 1; page <= 10; page++) {
     const { data: list, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
     if (error || !list?.users?.length) break;
-    const hit = list.users.find((u) => (u.email ?? "").toLowerCase() === e);
+    const hit = list.users.find(
+      (u) => (u.email ?? "").toLowerCase() === e && Boolean(u.email_confirmed_at),
+    );
     if (hit) return hit.id;
     if (list.users.length < 1000) break;
   }
@@ -146,6 +148,21 @@ export async function grantFromOrder(
   const lsStatus: string = attr.status ?? "paid";
   const refunded = attr.refunded === true || lsStatus === "refunded";
   const orderStatus = refunded ? "refunded" : lsStatus === "pending" ? "pending" : "paid";
+
+  // BEZPEČNOSŤ: objednávka (a jej licencia), ktorá už patrí INÉMU účtu, sa
+  // nikdy nepresunie ani nezmaže v mene niekoho iného (napr. keď si niekto
+  // založí účet na cudzí e-mail a spustí lemon-sync).
+  const { data: orderRows } = await admin
+    .from("orders").select("user_id").eq("ls_order_id", orderId).limit(1);
+  const { data: licRows } = await admin
+    .from("licenses").select("user_id").eq("ls_order_id", orderId).limit(1);
+  const ownerId = (orderRows?.[0]?.user_id ?? licRows?.[0]?.user_id ?? null) as string | null;
+  if (ownerId && ownerId !== userId) {
+    console.warn(
+      `[licensing] order ${orderId} patrí účtu ${ownerId}, nie ${userId} – nič nemením`,
+    );
+    return { plan, license: "skipped" };
+  }
 
   await upsertBy(admin, "orders", "ls_order_id", orderId, {
     user_id: userId,

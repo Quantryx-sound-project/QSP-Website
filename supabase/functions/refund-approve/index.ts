@@ -62,6 +62,20 @@ Deno.serve(async (req) => {
   if (rrErr || !rr) return json({ error: "request_not_found" }, 404);
   if (rr.status !== "pending") return json({ error: `request is ${rr.status}` }, 409);
 
+  // BEZPEČNOSŤ: refundovať len objednávku, ktorá naozaj patrí žiadateľovi a je zaplatená
+  const { data: ord } = await admin
+    .from("orders")
+    .select("user_id, status, total")
+    .eq("ls_order_id", rr.ls_order_id)
+    .maybeSingle();
+  if (!ord || ord.user_id !== rr.user_id || ord.status !== "paid" || !(Number(ord.total) > 0)) {
+    await admin
+      .from("refund_requests")
+      .update({ admin_note: "Zablokované: objednávka nepatrí žiadateľovi alebo nie je zaplatená" })
+      .eq("id", requestId);
+    return json({ error: "order_mismatch" }, 409);
+  }
+
   // 2) refund cez Lemon Squeezy (celá suma)
   const r = await fetch(`https://api.lemonsqueezy.com/v1/orders/${rr.ls_order_id}/refund`, {
     method: "POST",

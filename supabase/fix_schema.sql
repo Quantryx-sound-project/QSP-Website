@@ -128,12 +128,9 @@ create policy "Users can view own licenses"
   on public.licenses for select
   using (auth.uid() = user_id);
 
--- Používateľ si smie sám pridať LEN demo licenciu (zadarmo, po prihlásení).
--- Platené licencie naďalej zapisuje výhradne backend (service_role).
+-- Demo licenciu si používateľ pridáva cez funkciu claim_demo_license()
+-- (security_fix_2026-10.sql). Priamy insert z prehliadača je zakázaný.
 drop policy if exists "Users can self-grant demo license" on public.licenses;
-create policy "Users can self-grant demo license"
-  on public.licenses for insert
-  with check (auth.uid() = user_id and plan = 'demo');
 
 -- Max. jedna demo licencia na používateľa (zabráni duplicitám).
 create unique index if not exists licenses_one_demo_per_user
