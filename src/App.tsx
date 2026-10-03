@@ -23,6 +23,7 @@ import Design from "./pages/Design";
 import EarlyAccess from "./pages/EarlyAccess";
 import RefundPolicy from "./pages/RefundPolicy";
 import Reviews from "./pages/Reviews";
+import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             />
             <Route path="/early-access" element={<EarlyAccess />} />
             <Route path="/alter/reviews" element={<Reviews />} />
+            <Route path="/help" element={<Help />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />

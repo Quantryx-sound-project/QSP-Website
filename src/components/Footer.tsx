@@ -37,6 +37,7 @@ const Footer = () => {
               {(session || isAdmin) && (
                 <li><Link to="/pricing" className="hover:text-foreground">{t("nav.pricing")}</Link></li>
               )}
+              <li><Link to="/help" className="hover:text-foreground">{t("nav.help")}</Link></li>
               <li><Link to="/about" className="hover:text-foreground">{t("nav.aboutFull")}</Link></li>
             </ul>
           </div>
