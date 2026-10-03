@@ -24,16 +24,16 @@
   "macos": {
     "url": "https://quantryxstudio.com/dashboard#licenses",
     "pro": {
-      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Pro-macOS.pkg",
-      "sha256": ""
+      "url": "https://github.com/Quantryx-sound-project/Alter-Releases/releases/download/v0.0.3/Alter-0.0.3-Pro-macOS.pkg",
+      "sha256": "4136bf8f70c8009dd0fbc86d519f080990c921c6add66c0ebc18b2bdd731c99d"
     },
     "creator": {
-      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Creator-macOS.pkg",
-      "sha256": ""
+      "url": "https://github.com/Quantryx-sound-project/Alter-Releases/releases/download/v0.0.3/Alter-0.0.3-Creator-macOS.pkg",
+      "sha256": "71af8b1b219ab1e43d4fb6f3c798b9f9b939bf232df2f23308bf99c94048f132"
     },
     "listener": {
-      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.2/Alter-0.0.2-Listener-macOS.pkg",
-      "sha256": ""
+      "url": "https://github.com/Quantryx-sound-project/Alter-Releases/releases/download/v0.0.3/Alter-0.0.3-Listener-macOS.pkg",
+      "sha256": "b3e9ac322cadfa86edb0772f5b4f9cb5bacaaf2921113c6c99ea997d65cdc2bf"
     }
   },
   "page": "https://quantryxstudio.com/dashboard#licenses"
