@@ -1,4 +1,6 @@
-import { Waves, Headphones, Sparkles, Crown, LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
+import { Headphones, Sparkles, Crown } from "lucide-react";
+import AlterLogo from "@/components/AlterLogo";
 
 // Štruktúra a ceny sú tu; všetok zobrazený text je v translations.ts.
 // Ceny necháme ako reťazec (€ + desatinná čiarka) — sú jazykovo neutrálne.
@@ -55,13 +57,13 @@ export const planFeaturesKey = (id: string) => {
 
 export interface Product {
   slug: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   planIds: PlanId[];
   gallery: number; // počet placeholder obrázkov
 }
 
 export const products: Product[] = [
-  { slug: "demo", icon: Waves, gallery: 3, planIds: ["demo"] },
+  { slug: "demo", icon: AlterLogo, gallery: 3, planIds: ["demo"] },
   {
     slug: "listener",
     icon: Headphones,

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AlterLogoFull from "@/components/AlterLogoFull";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -85,8 +86,7 @@ const Login = () => {
       </div>
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <img src="/logo-mark.svg" alt="" aria-hidden className="h-10 w-auto" />
-          <span className="text-3xl font-bold tracking-tight">Alter</span>
+          <AlterLogoFull className="h-24 w-auto text-primary" />
         </Link>
 
         <Card className="bg-card/50 border-border/40">

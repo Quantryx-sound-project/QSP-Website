@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Waves, ArrowLeft, Lock, ShieldCheck, Menu, X } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Menu, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useSidebar } from "@/hooks/useSidebar";
@@ -12,6 +12,7 @@ import { track } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
 import AppMenu from "@/components/AppMenu";
 import { cn } from "@/lib/utils";
+import AlterLogoFull from "@/components/AlterLogoFull";
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
@@ -60,8 +61,7 @@ const Checkout = () => {
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <Link to="/" className="flex items-center gap-2">
-              <Waves className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold tracking-tight">Alter</span>
+              <AlterLogoFull className="h-12 w-auto text-primary" />
             </Link>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Waves, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/lib/i18n";
+import AlterLogoFull from "@/components/AlterLogoFull";
 
 /**
  * Dual-mode reset page.
@@ -86,8 +87,7 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <Waves className="h-10 w-10 text-primary" />
-          <span className="text-3xl font-bold tracking-tight">Alter</span>
+          <AlterLogoFull className="h-24 w-auto text-primary" />
         </Link>
 
         <Card className="bg-card/50 border-border/40">

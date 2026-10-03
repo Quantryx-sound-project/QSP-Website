@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Menu, X, Waves, Palette } from "lucide-react";
+import { ArrowRight, Menu, X, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSidebar } from "@/hooks/useSidebar";
 import Footer from "@/components/Footer";
@@ -17,6 +17,7 @@ import { showDonations } from "@/lib/earlyAccess";
 import heroBg from "@/assets/backgrounds/background.png";
 import spiralBg from "@/assets/backgrounds/bg2.png";
 import { trackClick } from "@/lib/analytics";
+import AlterLogo from "@/components/AlterLogo";
 
 const Quantryx = () => {
   const { t } = useT();
@@ -26,7 +27,7 @@ const Quantryx = () => {
   const apps = [
     {
       name: "Alter",
-      icon: Waves,
+      icon: AlterLogo,
       href: "/pricing",
       status: t("landing.statusActive"),
       tagline: t("landing.alterTagline"),
@@ -168,7 +169,7 @@ const Quantryx = () => {
                     <CardHeader>
                       <div className="flex items-start justify-between mb-4">
                         <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/30 grid place-items-center transition-shadow group-hover:glow-cyan">
-                          <Icon className="h-7 w-7 text-primary" />
+                          <Icon className="h-7 w-10 text-primary" />
                         </div>
                         <Badge variant="outline" className="border-primary/30 text-primary">
                           {app.status}
