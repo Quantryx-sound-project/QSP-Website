@@ -6,17 +6,17 @@
   "min_supported": "0.0.0",
   "notes": "Important fix: the AlterCreator and AlterPro plug-ins could make your DAW use more and more memory (especially during export/bounce) until Windows started closing apps. This update fixes it and is required.",
   "windows": {
-    "url": "https://github.com/Quantryx-sound-project/Alter/releases/download/v0.0.3/Alter-0.0.3-Windows.exe",
+    "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.3/Alter-0.0.3-Windows.exe",
     "pro": {
-      "url": "https://github.com/Quantryx-sound-project/Alter/releases/download/v0.0.3/Alter-0.0.3-Pro-Windows.exe",
+      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.3/Alter-0.0.3-Pro-Windows.exe",
       "sha256": "45529e89f15f202730344948e61959b793cbaf82bb67a66e94dfd5c3955f9b5f"
     },
     "creator": {
-      "url": "https://github.com/Quantryx-sound-project/Alter/releases/download/v0.0.3/Alter-0.0.3-Creator-Windows.exe",
+      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.3/Alter-0.0.3-Creator-Windows.exe",
       "sha256": "ff17d4fbf1b93345ed2f28f86b1d5724e6c78486b07b0e7e4218dc087782fbab"
     },
     "listener": {
-      "url": "https://github.com/Quantryx-sound-project/Alter/releases/download/v0.0.3/Alter-0.0.3-Listener-Windows.exe",
+      "url": "https://github.com/Quantryx-sound-project/alter-releases/releases/download/v0.0.3/Alter-0.0.3-Listener-Windows.exe",
       "sha256": "230ade9dfb726efedda0ff590d59c7b74a132249841d5c9b904f12a075b2e9ee"
     },
     "sha256": "663d80632173d6c79307074ba70984c4f7308a77c17399f16561ebec6424082f"

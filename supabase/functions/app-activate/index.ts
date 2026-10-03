@@ -40,6 +40,42 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// ---------- Podpis licencie (Ed25519) ----------
+// Sukromny kluc je LEN tu, v Supabase Secrets: LICENSE_SIGNING_JWK_B64
+// (base64 z JWK; vyrobi ho Shared/Tools/gen-license-key.mjs). Appka ma len
+// verejny kluc, takze platnu licenciu si sama vyrobit nevie.
+let signingKey: CryptoKey | null = null;
+async function getSigningKey(): Promise<CryptoKey | null> {
+  if (signingKey) return signingKey;
+  const b64 = (Deno.env.get("LICENSE_SIGNING_JWK_B64") ?? "").trim();
+  if (!b64) return null;
+  try {
+    const jwk = JSON.parse(atob(b64));
+    signingKey = await crypto.subtle.importKey("jwk", jwk, { name: "Ed25519" }, false, ["sign"]);
+    return signingKey;
+  } catch (e) {
+    console.error("[app-activate] LICENSE_SIGNING_JWK_B64 je neplatny:", (e as Error).message);
+    return null;
+  }
+}
+
+const toB64 = (bytes: Uint8Array) => {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+};
+
+async function signLicense(claims: Record<string, unknown>) {
+  const key = await getSigningKey();
+  if (!key) {
+    console.error("[app-activate] chyba LICENSE_SIGNING_JWK_B64 – licencia NEBUDE podpisana");
+    return {};
+  }
+  const payload = new TextEncoder().encode(JSON.stringify(claims));
+  const sig = new Uint8Array(await crypto.subtle.sign({ name: "Ed25519" }, key, payload));
+  return { license_token: toB64(payload), license_sig: toB64(sig) };
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -72,6 +108,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* prázdne telo OK */ }
   const machineId: string = String(body.machine_id ?? "").trim();
   if (!machineId) return json({ error: "missing_machine_id" }, 400);
+  if (machineId.length > 128) return json({ error: "bad_machine_id" }, 400);
   const machineName: string | null = body.machine_name ?? null;
   const platform: string | null = body.platform ?? null;
   const appVersion: string | null = body.app_version ?? null;
@@ -81,7 +118,7 @@ Deno.serve(async (req) => {
     .from("licenses")
     .select("id, plan, status, period_type, ends_at, activations_limit, product_name")
     .eq("user_id", user.id);
-  if (licErr) return json({ error: "db_error", detail: licErr.message }, 500);
+  if (licErr) { console.error("[app-activate]", licErr.message); return json({ error: "db_error" }, 500); }
 
   const usable = (licenses ?? []).filter(isUsable);
   usable.sort((a, b) => (TIER_RANK[b.plan] ?? 0) - (TIER_RANK[a.plan] ?? 0));
@@ -109,7 +146,7 @@ Deno.serve(async (req) => {
     .from("devices")
     .select("id, machine_id")
     .eq("user_id", user.id);
-  if (devErr) return json({ error: "db_error", detail: devErr.message }, 500);
+  if (devErr) { console.error("[app-activate]", devErr.message); return json({ error: "db_error" }, 500); }
 
   const existing = (devices ?? []).find((d) => d.machine_id === machineId);
 
@@ -134,7 +171,7 @@ Deno.serve(async (req) => {
       app_version: appVersion,
       last_seen: nowIso,
     });
-    if (insErr) return json({ error: "db_error", detail: insErr.message }, 500);
+    if (insErr) { console.error("[app-activate]", insErr.message); return json({ error: "db_error" }, 500); }
   }
 
   // drž activations_used synchronizované (len na zobrazenie v profile)
@@ -145,7 +182,20 @@ Deno.serve(async (req) => {
   const slotsUsed = count ?? (existing ? (devices?.length ?? 1) : (devices?.length ?? 0) + 1);
   await admin.from("licenses").update({ activations_used: slotsUsed }).eq("id", best.id);
 
+  // Podpisana licencia: tier + viazanost na stroj + do kedy plati offline.
+  const nowSec = Math.floor(Date.now() / 1000);
+  const signed = await signLicense({
+    v: 1,
+    sub: user.id,
+    mid: machineId,
+    tier: best.plan,
+    iat: nowSec,
+    exp: nowSec + GRACE_DAYS * 24 * 60 * 60,
+    ends: best.ends_at ? Math.floor(new Date(best.ends_at).getTime() / 1000) : 0,
+  });
+
   return json({
+    ...signed,
     tier: best.plan,                       // "listener" | "creator" | "pro"
     plan: best.plan,
     product_name: best.product_name ?? null,
