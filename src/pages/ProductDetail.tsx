@@ -138,6 +138,14 @@ const ProductDetail = () => {
   const base = `products.${product.slug}`;
   const buyLabel = t("productPage.buyFor").replace("{price}", price);
   const isAuthed = Boolean(session);
+  // Kúpa vyžaduje prihlásenie – neprihláseného pošleme na login a po ňom
+  // ho vrátime rovno do checkoutu pre túto edíciu.
+  const goToCheckout = () => {
+    const target = { pathname: "/checkout", search: `?plan=${primaryPlanId}` };
+    if (isAuthed) navigate(`${target.pathname}${target.search}`);
+    else navigate("/login", { state: { from: target } });
+  };
+  const paidCtaLabel = isAuthed ? buyLabel : t("productPage.signInToBuy").replace("{price}", price);
 
   // Demo prechádza rovnakou platobnou bránou (Lemon Squeezy, dobrovoľný
   // príspevok od 0 €). Po dokončení objednávky sa licencia aj stiahnutie
@@ -146,13 +154,13 @@ const ProductDetail = () => {
     <Button
       size="lg"
       variant="cyber"
-      onClick={() => navigate(`/checkout?plan=${primaryPlanId}`)}
+      onClick={goToCheckout}
     >
       <Download className="mr-2 h-4 w-4" />
       {t("productPage.getDemo")}
     </Button>
   ) : (
-    <Button size="lg" variant="cyber" onClick={() => navigate("/login")}>
+    <Button size="lg" variant="cyber" onClick={goToCheckout}>
       {t("productPage.signInToDownload")}
     </Button>
   );
@@ -229,9 +237,9 @@ const ProductDetail = () => {
               <Button
                 size="lg"
                 variant="cyber"
-                onClick={() => navigate(`/checkout?plan=${primaryPlanId}`)}
+                onClick={goToCheckout}
               >
-                {buyLabel}
+                {paidCtaLabel}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
@@ -365,9 +373,9 @@ const ProductDetail = () => {
                   <Button
                     size="lg"
                     variant="cyber"
-                    onClick={() => navigate(`/checkout?plan=${primaryPlanId}`)}
+                    onClick={goToCheckout}
                   >
-                    {buyLabel}
+                    {paidCtaLabel}
                   </Button>
                 )}
               </div>

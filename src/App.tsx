@@ -39,14 +39,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Quantryx />} />
-            <Route
-              path="/pricing"
-              element={
-                <ProtectedRoute>
-                  <Pricing />
-                </ProtectedRoute>
-              }
-            />
+            {/* Cenník je verejný – prihlásenie sa vyžaduje až pri kúpe (/checkout). */}
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/early-access" element={<EarlyAccess />} />
             <Route path="/alter/reviews" element={<Reviews />} />
             <Route path="/help" element={<Help />} />

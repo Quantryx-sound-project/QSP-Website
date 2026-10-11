@@ -19,7 +19,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
 
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || "/dashboard";
+  // Vrátime používateľa presne tam, kam chcel ísť – vrátane ?plan=… pri kúpe.
+  const fromLoc = (location.state as { from?: { pathname: string; search?: string } } | null)?.from;
+  const from = fromLoc?.pathname ? `${fromLoc.pathname}${fromLoc.search ?? ""}` : "/dashboard";
 
   useEffect(() => {
     if (session) navigate(from, { replace: true });

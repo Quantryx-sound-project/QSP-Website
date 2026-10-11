@@ -16,7 +16,12 @@ const Pricing = () => {
   const { t, tList, lang } = useT();
   const { session } = useAuth();
 
-  const buy = (planId: string) => navigate(`/checkout?plan=${planId}`);
+  // Neprihlásený návštevník: najprv login, potom ho vrátime rovno do checkoutu.
+  const buy = (planId: string) => {
+    const target = { pathname: "/checkout", search: `?plan=${planId}` };
+    if (session) navigate(`${target.pathname}${target.search}`);
+    else navigate("/login", { state: { from: target } });
+  };
   const periodLabel = (p: Plan) => {
     if (p.periodType === "free") return t("plans.free");
     return t("plans.oneTime");
@@ -142,7 +147,9 @@ const Pricing = () => {
           variant={plan.highlight ? "cyber" : "cyber-outline"}
           onClick={() =>
             plan.periodType === "free"
-              ? navigate(session ? "/product/demo" : "/login")
+              ? session
+                ? navigate("/product/demo")
+                : navigate("/login", { state: { from: { pathname: "/product/demo" } } })
               : buy(plan.id)
           }
         >
@@ -150,7 +157,9 @@ const Pricing = () => {
             ? session
               ? t("dashboard.download")
               : t("common.signInToDownload")
-            : t("common.buy")}
+            : session
+              ? t("common.buy")
+              : t("common.signInToBuy")}
         </Button>
       </CardContent>
     </Card>

@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { useInWaitlist } from "@/hooks/useInWaitlist";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -198,7 +197,6 @@ const AdminNavItem = ({ onNavigate }: { onNavigate?: () => void }) => (
 const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; compact?: boolean }) => {
   const { session, signOut } = useAuth();
   const isAdmin = useIsAdmin();
-  const inWaitlist = useInWaitlist();
   const { t } = useT();
   const navigate = useNavigate();
   const [alterOpen, setAlterOpen] = useState(true);
@@ -207,16 +205,9 @@ const AppMenu = ({ onNavigate, compact = false }: { onNavigate?: () => void; com
   // (rozdávame ho po ľuďoch, verejnosť oň zatiaľ nemá vedieť).
   // "What is Alter" je verejné; Pricing a karty tierov len pre prihláseného
   // vo waitliste (alebo admina).
-  // Od 09/2026: cenník a karty edícií vidí každý prihlásený (nielen waitlist).
-  const eligible = Boolean(session) || isAdmin === true || inWaitlist === true;
-  const visibleAlterItems = alterItems.filter((item) => {
-    if (item.to === "/early-access") return true;
-    if (item.to === "/alter/reviews") return true;
-    if (item.to === "/help") return true;
-    if (item.to === "/pricing") return eligible;
-    if (item.to.startsWith("/product/")) return eligible;
-    return true;
-  });
+  // Od 10/2026: cenník aj karty edícií (Demo, Listener, Creator, Pro) vidí
+  // každý návštevník. Prihlásenie sa vyžaduje až pri kúpe / stiahnutí.
+  const visibleAlterItems = alterItems;
 
   const handleLogout = async () => {
     await signOut();
